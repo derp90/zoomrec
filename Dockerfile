@@ -31,6 +31,7 @@ RUN apt-get update && \
         openssl \
         wget \
         locales \
+        gnome-screenshot \
         bzip2 \
         tzdata && \
 # Generate locales for en_US.UTF-8
@@ -60,9 +61,9 @@ RUN apt-get update && \
         at-spi2-core \
         xauth \
         x11-xserver-utils \
-        libxkbcommon-x11-0 && \
+        libxkbcommon-x11-0 
 # Install Zoom dependencies
-    apt-get install --no-install-recommends -y \
+RUN apt-get install --no-install-recommends -y \
         libxcb-xinerama0 \
         libglib2.0-0 \
         libxcb-shape0 \
@@ -81,14 +82,20 @@ RUN apt-get update && \
         libxslt1.1 \
         libsqlite3-0 \
         libxcb-keysyms1 \
-        libxcb-xtest0 && \
+        libxcb-xtest0 \
+        libgbm1 \
+        desktop-file-utils \
+        libxcb-cursor0 \
+        libxcb-icccm4 \
+        libatomic1
 # Install Zoom
-    wget -q -O zoom_amd64.deb https://cdn.zoom.us/prod/5.13.4.711/zoom_amd64.deb && \
-    dpkg -i zoom_amd64.deb && \
+RUN wget -q -O zoom_amd64.deb https://cdn.zoom.us/prod/6.3.11.7212/zoom_amd64.deb && \
+    #dpkg -i zoom_amd64.deb && \
+    dpkg -i zoom_amd64.deb || (cat /var/log/dpkg.log && exit 1) && \
     apt-get -f install -y && \
-    rm -rf zoom_amd64.deb && \
+    rm -rf zoom_amd64.deb 
 # Install FFmpeg
-    apt-get install --no-install-recommends -y \
+RUN apt-get install --no-install-recommends -y \
         ffmpeg \
         libavcodec-extra && \
 # Install Python dependencies for script
