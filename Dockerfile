@@ -63,11 +63,15 @@ RUN apt-get update && \
         at-spi2-core \
         libxcb-xinerama0 \
         libxcb1 \
+        xvfb \
+        x11-apps \
+        libxcb-xinerama0 \
         libxkbcommon-x11-0 \
         libglu1-mesa \
         xauth \
         x11-xserver-utils \
         libxkbcommon-x11-0 
+RUN pip install pyvirtualdisplay
 # Install Zoom dependencies
 RUN apt-get install --no-install-recommends -y \
         libxcb-xinerama0 \
