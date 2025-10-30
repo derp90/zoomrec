@@ -87,7 +87,6 @@ RUN apt-get install --no-install-recommends -y \
         libxcb-image0 \
         libfontconfig1 \
         libgl1-mesa-glx \
-        libegl1-mesa \
         libxi6 \
         libsm6 \
         libxrender1 \
@@ -104,6 +103,7 @@ RUN apt-get install --no-install-recommends -y \
         libatomic1 \
         libxcb-xtest0 \
         ibus
+        #libegl1-mesa \
 # Install firefox
 RUN apt-get install --no-install-recommends -y \
     firefox
