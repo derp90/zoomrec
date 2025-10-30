@@ -71,7 +71,7 @@ RUN apt-get update && \
         xauth \
         x11-xserver-utils \
         libxkbcommon-x11-0 
-RUN pip install pyvirtualdisplay
+#RUN pip install pyvirtualdisplay
 # Install Zoom dependencies
 RUN apt-get install --no-install-recommends -y \
         libxcb-xinerama0 \
