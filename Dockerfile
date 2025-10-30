@@ -88,6 +88,10 @@ RUN apt-get install --no-install-recommends -y \
         libxcb-cursor0 \
         libxcb-icccm4 \
         libatomic1
+# Install Chromium
+RUN apt-get update && \
+    apt-get install -y chromium-browser && \
+    rm -rf /var/lib/apt/lists/*
 # Install Zoom
 RUN wget -q -O zoom_amd64.deb https://cdn.zoom.us/prod/6.3.11.7212/zoom_amd64.deb && \
     #dpkg -i zoom_amd64.deb && \
