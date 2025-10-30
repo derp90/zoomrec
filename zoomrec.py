@@ -822,6 +822,8 @@ def join(meet_id, meet_pw, duration, description):
                     TIME_FORMAT) + "-" + description) + "_ok_error.png")
                 
     send_telegram_message("Meeting '{}' ended.".format(description))
+    
+    return schedule.CancelJob # run the job only once.
 
 def play_audio(description):
     # Get all files in audio directory
@@ -868,7 +870,7 @@ def join_ongoing_meeting():
             curr_date = datetime.now()
 
             # Monday, tuesday, ..
-            if row["weekday"].lower() == curr_date.strftime('%A').lower():
+            if datetime.strptime(row["date"],"%d/%m/%Y").strftime("%d/%m/%Y") == curr_date.strftime("%d/%m/%Y"):
                 curr_time = curr_date.time()
 
                 start_time_csv = datetime.strptime(row["time"], '%H:%M')
@@ -877,7 +879,7 @@ def join_ongoing_meeting():
                 start_time = start_date.time()
 
                 end_date = start_date + \
-                    timedelta(seconds=int(row["duration"]) * 60 + 300)  # Add 5 minutes
+                    timedelta(seconds=int(row["duration"]) * 60 + 600)  # Add 10 minutes
                 end_time = end_date.time()
 
                 recent_duration = (end_date - curr_date).total_seconds()
@@ -887,13 +889,13 @@ def join_ongoing_meeting():
                             logging.info(
                                 "Join meeting that is currently running..")
                             join(meet_id=row["id"], meet_pw=row["password"],
-                                 duration=recent_duration, description=row["description"])
+                                 meet_duration=recent_duration, meet_description=row["description"], meet_date =datetime.strptime(row["date"],"%d/%m/%Y") )
                 else:  # crosses midnight
                     if curr_time >= start_time or curr_time <= end_time and str(row["record"]) == 'true':
                             logging.info(
                                 "Join meeting that is currently running..")
                             join(meet_id=row["id"], meet_pw=row["password"],
-                                 duration=recent_duration, description=row["description"])
+                                 meet_duration=recent_duration, meet_description=row["description"], meet_date = datetime.strptime(row["date"],"%d/%m/%Y"))
 
 
 def setup_schedule():
@@ -901,20 +903,22 @@ def setup_schedule():
         csv_reader = csv.DictReader(csv_file, delimiter=CSV_DELIMITER)
         line_count = 0
         for row in csv_reader:
+            meet_date = datetime.strptime(row["date"], "%d/%m/%Y")
+            meet_id = row["id"]
+            meet_pw = row["password"]
+            meet_duration = row["duration"]
+            meet_description = row["description"]
             if str(row["record"]) == 'true':
-                cmd_string = "schedule.every()." + row["weekday"] \
-                             + ".at(\"" \
-                             + (datetime.strptime(row["time"], '%H:%M') - timedelta(minutes=1)).strftime('%H:%M') \
-                             + "\").do(join, meet_id=\"" + row["id"] \
-                             + "\", meet_pw=\"" + row["password"] \
-                             + "\", duration=" + str(int(row["duration"]) * 60) \
-                             + ", description=\"" + row["description"] + "\")"
-
-                cmd = compile(cmd_string, "<string>", "eval")
-                eval(cmd)
+                schedule.every().day.at((datetime.strptime(row["time"], '%H:%M') - timedelta(minutes=5)).strftime('%H:%M')).do(join_if_correct_date(meet_id,meet_pw,meet_duration,meet_description,meet_date))
                 line_count += 1
         logging.info("Added %s meetings to schedule." % line_count)
 
+def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet_date):
+    current_date_string = datetime.now().strftime("%d/%m/%Y")
+    meet_date_string = meet_date.strftime("%d/%m/%Y")
+    if current_date_string == meet_date_string:
+        join(meet_id,meet_pw,meet_duration,meet_description)
+    
 
 def main():
     try:
