@@ -5,3 +5,4 @@ psutil
 opencv-python
 pillow>=8.1.0
 requests
+security~=1.2.0
