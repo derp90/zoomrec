@@ -5,7 +5,7 @@ ENV HOME=/home/zoomrec \
     TERM=xfce4-terminal \
     START_DIR=/start \
     DEBIAN_FRONTEND=noninteractive \
-    VNC_RESOLUTION=1024x576 \
+    VNC_RESOLUTION=1920x1080 \
     VNC_COL_DEPTH=24 \
     VNC_PW=zoomrec \
     VNC_PORT=5901 \
@@ -21,6 +21,7 @@ ADD res/requirements.txt ${HOME}/res/requirements.txt
 # Install some tools
 RUN apt-get update && \
     apt-get install --no-install-recommends -y \
+        tini \
         apt \
         apt-utils \
         ca-certificates \
@@ -145,4 +146,5 @@ RUN chmod a+x ${START_DIR}/entrypoint.sh && \
 
 EXPOSE ${VNC_PORT}
 USER zoomrec
+ENTRYPOINT ["/usr/bin/tini", "-g", "-e", "143", "--"]
 CMD ${START_DIR}/entrypoint.sh
