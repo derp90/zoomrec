@@ -89,8 +89,8 @@ RUN apt-get install --no-install-recommends -y \
         libxcb-icccm4 \
         libatomic1
 # Install firefox
-RUN apt-get install --no-install-recommends -y \
-    firefox
+#RUN apt-get install --no-install-recommends -y \
+    #firefox
 # Install Zoom
 RUN wget -q -O zoom_amd64.deb https://cdn.zoom.us/prod/6.3.11.7212/zoom_amd64.deb && \
     #dpkg -i zoom_amd64.deb && \
