@@ -24,6 +24,16 @@ fi
 echo "$VNC_PW" | vncpasswd -f >> "$PASSWD_PATH"
 chmod 600 "$PASSWD_PATH"
 
+# Start system bus
+if [ ! -e /var/run/dbus/pid ]; then
+    echo "Starting dbus-daemon..."
+    dbus-daemon --system --fork
+fi
+
+# Export session bus
+export $(dbus-launch)
+export SESSION_MANAGER="local/$(hostname)/default"
+
 # Remove old vnc locks
 vncserver -kill "$DISPLAY" &> "$START_DIR"/vnc_startup.log || rm -rf /tmp/.X*-lock /tmp/.X11-unix &> "$START_DIR"/vnc_startup.log
 
