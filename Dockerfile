@@ -9,7 +9,8 @@ ENV HOME=/home/zoomrec \
     VNC_COL_DEPTH=24 \
     VNC_PW=zoomrec \
     VNC_PORT=5901 \
-    DISPLAY=:1
+    DISPLAY=:1 \
+    MYVER=2
 
 # Add user
 RUN useradd -ms /bin/bash zoomrec -d ${HOME}
