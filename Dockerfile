@@ -168,5 +168,5 @@ RUN chmod a+x ${START_DIR}/entrypoint.sh && \
 
 EXPOSE ${VNC_PORT}
 USER zoomrec
-ENTRYPOINT ["/usr/bin/tini", "-g", "-e", "143", "--"]
+#ENTRYPOINT ["/usr/bin/tini", "-g", "-e", "143", "--"]
 CMD ${START_DIR}/entrypoint.sh
