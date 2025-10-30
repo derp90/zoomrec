@@ -1,172 +1,35 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
-ENV HOME=/home/zoomrec \
-    TZ=America/Chicago \
-    TERM=xfce4-terminal \
-    START_DIR=/start \
-    DEBIAN_FRONTEND=noninteractive \
-    VNC_RESOLUTION=1920x1080 \
-    VNC_COL_DEPTH=24 \
-    VNC_PW=zoomrec \
-    VNC_PORT=5901 \
-    DISPLAY=:1 \
-    MYVER=2
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Add user
-RUN useradd -ms /bin/bash zoomrec -d ${HOME}
-WORKDIR ${HOME}
+RUN apt-get update && apt-get install -y \
+    wget unzip curl gnupg \
+    python3 python3-pip python3-opencv \
+    xvfb x11-apps x11-utils \
+    dbus-x11 \
+    alsa-utils pulseaudio \
+    libgl1-mesa-glx libglib2.0-0 \
+    xdotool \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ADD res/requirements.txt ${HOME}/res/requirements.txt
+# Install Zoom (latest)
+RUN wget -O zoom.deb https://zoom.us/client/latest/zoom_amd64.deb && \
+    apt-get update && apt-get install -y ./zoom.deb && rm zoom.deb
 
-# Install some tools
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y \
-        tini \
-        apt \
-        apt-utils \
-        ca-certificates \
-        publicsuffix \
-        libapt-pkg6.0 \
-        libpsl5 \
-        libssl1.1 \
-        libnss3 \
-        openssl \
-        wget \
-        locales \
-        gnome-screenshot \
-        bzip2 \
-        tzdata && \
-# Generate locales for en_US.UTF-8
-    locale-gen en_US.UTF-8 && \
-# Install tigervnc
-    wget -q -O tigervnc-1.10.0.x86_64.tar.gz https://sourceforge.net/projects/tigervnc/files/stable/1.10.0/tigervnc-1.10.0.x86_64.tar.gz && \
-    tar xz -f tigervnc-1.10.0.x86_64.tar.gz --strip 1 -C / && \
-    rm -rf tigervnc-1.10.0.x86_64.tar.gz && \
-# Install xfce ui
-    apt-get install --no-install-recommends -y \
-        supervisor \
-        xfce4 \
-        xfce4-goodies \
-        xfce4-pulseaudio-plugin \
-        xfce4-terminal \
-        xubuntu-icon-theme && \
-# Install pulseaudio
-    apt-get install --no-install-recommends -y \
-        pulseaudio \
-        pavucontrol && \
-# Install necessary packages
-    apt-get install --no-install-recommends -y \
-        ibus \
-        dbus-user-session \
-        dbus-x11 \
-        dbus \
-        at-spi2-core \
-        libxcb-xinerama0 \
-        libxcb1 \
-        xvfb \
-        x11-apps \
-        libxcb-xinerama0 \
-        libxkbcommon-x11-0 \
-        libglu1-mesa \
-        xauth \
-        x11-xserver-utils \
-        libxkbcommon-x11-0 
-#RUN pip install pyvirtualdisplay
-# Install Zoom dependencies
-RUN apt-get install --no-install-recommends -y \
-        libxcb-xinerama0 \
-        libvorbisenc2 \
-        libvorbis0a \
-        libvisual-0.4-0 \
-        libtheora0 \
-        liborc-0.4-0 \
-        libopus0 \
-        libogg0 \
-        libcdparanoia0 \
-        libxcb-cursor0 \
-        libxcb-icccm4 \
-        libgstreamer-plugins-base1.0-0 \
-        gstreamer1.0-plugins-base \
-        libglib2.0-0 \
-        libxcb-shape0 \
-        libxcb-shm0 \
-        libxcb-xfixes0 \
-        libxcb-randr0 \
-        libxcb-image0 \
-        libfontconfig1 \
-        libgl1-mesa-glx \
-        libxi6 \
-        libsm6 \
-        libxrender1 \
-        libpulse0 \
-        libxcomposite1 \
-        libxslt1.1 \
-        libsqlite3-0 \
-        libxcb-keysyms1 \
-        libxcb-xtest0 \
-        libgbm1 \
-        desktop-file-utils \
-        libxcb-cursor0 \
-        libxcb-icccm4 \
-        libatomic1 \
-        libxcb-xtest0 \
-        ibus
-        #libegl1-mesa \
-# Install firefox
-RUN apt-get install --no-install-recommends -y \
-    firefox
-# Install Zoom
-RUN wget -q -O zoom_amd64.deb https://cdn.zoom.us/prod/6.3.11.7212/zoom_amd64.deb && \
-    #dpkg -i zoom_amd64.deb && \
-    dpkg -i zoom_amd64.deb || (cat /var/log/dpkg.log && exit 1) && \
-    apt-get -f install -y && \
-    rm -rf zoom_amd64.deb 
-# Install FFmpeg
-RUN apt-get install --no-install-recommends -y \
-        ffmpeg \
-        libavcodec-extra && \
-# Install Python dependencies for script
-    apt-get install --no-install-recommends -y \
-        python3 \
-        python3-pip \
-        python3-tk \
-        python3-dev \
-        python3-setuptools \
-        scrot && \
-    pip3 install --upgrade --no-cache-dir -r ${HOME}/res/requirements.txt && \
-# Install VLC - optional
-    apt-get install --no-install-recommends -y vlc && \
-# Clean up
-    apt-get autoremove --purge -y && \
-    apt-get autoclean -y && \
-    apt-get clean -y && \
-    rm -rf /var/lib/apt/lists/*
+# Install Python packages
+RUN pip3 install pyautogui pyscreeze opencv-python pillow schedule
 
-# Allow access to pulseaudio
-RUN adduser zoomrec pulse-access
-
+# Create user
+RUN useradd -m zoomrec
 USER zoomrec
+WORKDIR /home/zoomrec
 
-# Add home resources
-ADD res/home/ ${HOME}/
+ENV DISPLAY=:99
+ENV QT_X11_NO_MITSHM=1
 
-# Add startup
-ADD res/entrypoint.sh ${START_DIR}/entrypoint.sh
-ADD res/xfce.sh ${START_DIR}/xfce.sh
+COPY zoomrec.py /home/zoomrec/
 
-# Add python script with resources
-ADD zoomrec.py ${HOME}/
-ADD res/img ${HOME}/img
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Set permissions
-USER 0
-RUN chmod a+x ${START_DIR}/entrypoint.sh && \
-    chmod -R a+rw ${START_DIR} && \
-    chown -R zoomrec:zoomrec ${HOME} && \
-    find ${HOME}/ -name '*.sh' -exec chmod -v a+x {} + && \
-    find ${HOME}/ -name '*.desktop' -exec chmod -v a+x {} +
-
-EXPOSE ${VNC_PORT}
-USER zoomrec
-#ENTRYPOINT ["/usr/bin/tini", "-g", "-e", "143", "--"]
-CMD ${START_DIR}/entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
