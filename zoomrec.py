@@ -12,6 +12,8 @@ import time
 import atexit
 import requests
 from datetime import datetime, timedelta
+import secrets
+from security import safe_command
 
 global ONGOING_MEETING
 global VIDEO_PANEL_HIDED
@@ -59,7 +61,7 @@ if DISPLAY_NAME is None or  len(DISPLAY_NAME) < 3:
         'Computer',
         'Android'
     ]
-    DISPLAY_NAME = random.choice(NAME_LIST)
+    DISPLAY_NAME = secrets.SystemRandom().choice(NAME_LIST)
 
 TIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 CSV_DELIMITER = ';'
@@ -834,7 +836,7 @@ def play_audio(description):
     if len(files) > 0:
         unmute(description)
         # Get random file
-        file=random.choice(files)
+        file=secrets.SystemRandom().choice(files)
         path = os.path.join(AUDIO_PATH, file)
         # Use paplay to play .wav file on specific Output
         command = "/usr/bin/paplay --device=microphone -p " + path
