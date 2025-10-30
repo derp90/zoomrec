@@ -3,7 +3,6 @@ import logging
 import os
 import psutil
 import pyautogui
-import random
 import schedule
 import signal
 import subprocess
