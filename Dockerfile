@@ -61,6 +61,10 @@ RUN apt-get update && \
         dbus-x11 \
         dbus \
         at-spi2-core \
+        libxcb-xinerama0 \
+        libxcb1 \
+        libxkbcommon-x11-0 \
+        libglu1-mesa \
         xauth \
         x11-xserver-utils \
         libxkbcommon-x11-0 
