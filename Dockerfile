@@ -1,5 +1,9 @@
 FROM ubuntu:20.04
-
+sdfsdf
+sdfsdfs
+sdfsdfs
+sdf
+this should throw an error
 ENV HOME=/home/zoomrec \
     TZ=Europe/Berlin \
     TERM=xfce4-terminal \
