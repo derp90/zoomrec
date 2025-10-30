@@ -67,6 +67,18 @@ RUN apt-get update && \
 # Install Zoom dependencies
 RUN apt-get install --no-install-recommends -y \
         libxcb-xinerama0 \
+        libvorbisenc2 \
+        libvorbis0a \
+        libvisual-0.4-0 \
+        libtheora0 \
+        liborc-0.4-0 \
+        libopus0 \
+        libogg0 \
+        libcdparanoia0 \
+        libxcb-cursor0 \
+        libxcb-icccm4 \
+        libgstreamer-plugins-base1.0-0 \
+        gstreamer1.0-plugins-base \
         libglib2.0-0 \
         libxcb-shape0 \
         libxcb-shm0 \
@@ -89,7 +101,9 @@ RUN apt-get install --no-install-recommends -y \
         desktop-file-utils \
         libxcb-cursor0 \
         libxcb-icccm4 \
-        libatomic1
+        libatomic1 \
+        libxcb-xtest0 \
+        ibus
 # Install firefox
 RUN apt-get install --no-install-recommends -y \
     firefox
