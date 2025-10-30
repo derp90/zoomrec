@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 ENV HOME=/home/zoomrec \
-    TZ=Europe/Berlin \
+    TZ=America/Chicago \
     TERM=xfce4-terminal \
     START_DIR=/start \
     DEBIAN_FRONTEND=noninteractive \
