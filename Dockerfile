@@ -90,7 +90,12 @@ RUN apt-get install --no-install-recommends -y \
         libatomic1
 # Install Chromium
 RUN apt-get update && \
-    apt-get install -y chromium-browser && \
+    apt-get install -y \
+    chromium-browser \
+    xvfb \
+    unzip \
+    wget \
+    --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 # Install Zoom
 RUN wget -q -O zoom_amd64.deb https://cdn.zoom.us/prod/6.3.11.7212/zoom_amd64.deb && \
