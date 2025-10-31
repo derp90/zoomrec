@@ -112,7 +112,10 @@ RUN apt-get install --no-install-recommends -y \
         libxcb-xtest0 \
         ibus
         #libegl1-mesa \
-
+# Install firefox
+RUN apt-get install --no-install-recommends -y \
+    firefox
+    
 RUN apt-get update && apt-get install -y \
     libx11-6 \
     libx11-xcb1 \
@@ -133,9 +136,7 @@ RUN apt-get update && apt-get install -y \
     libqt5dbus5 \
     && rm -rf /var/lib/apt/lists/*
         
-# Install firefox
-RUN apt-get install --no-install-recommends -y \
-    firefox
+
 # Install Zoom
 RUN wget -q -O zoom_amd64.deb https://cdn.zoom.us/prod/6.3.11.7212/zoom_amd64.deb && \
     #dpkg -i zoom_amd64.deb && \
