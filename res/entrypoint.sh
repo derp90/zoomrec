@@ -32,6 +32,7 @@ exec 3>&1 4>&2
   rm -rf /tmp/.X*-lock /tmp/.X11-unix || true
 
   # Start system dbus if not running
+  mkdir -p /var/run/dbus
   if [ ! -e /var/run/dbus/pid ]; then
     echo "Starting system dbus..."
     dbus-daemon --system --fork || echo "dbus-daemon system failed (non-fatal)"
