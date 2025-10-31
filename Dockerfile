@@ -116,7 +116,7 @@ RUN apt-get install --no-install-recommends -y \
 RUN apt-get install --no-install-recommends -y \
     firefox
     
-RUN apt-get update && apt-get install -y \
+RUN apt-get install --no-install-recommends -y \
     libx11-6 \
     libx11-xcb1 \
     libxcb1 \
