@@ -64,6 +64,4 @@ ENV DISPLAY=:99
 ENV QT_X11_NO_MITSHM=1
 
 
-RUN chmod +x /entrypoint.sh
-
 ENTRYPOINT  [${START_DIR}/entrypoint.sh]
