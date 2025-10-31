@@ -112,6 +112,27 @@ RUN apt-get install --no-install-recommends -y \
         libxcb-xtest0 \
         ibus
         #libegl1-mesa \
+
+RUN apt-get update && apt-get install -y \
+    libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcb-render0 \
+    libxcb-shm0 \
+    libxcb-xfixes0 \
+    libxcb-shape0 \
+    libxcb-randr0 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libgl1-mesa-glx \
+    libgtk2.0-0 \
+    libqt5gui5 \
+    qt5dxcb-plugin \
+    libqt5widgets5 \
+    libqt5core5a \
+    libqt5dbus5 \
+    && rm -rf /var/lib/apt/lists/*
+        
 # Install firefox
 RUN apt-get install --no-install-recommends -y \
     firefox
