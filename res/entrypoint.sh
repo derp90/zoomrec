@@ -73,7 +73,7 @@ exec 3>&1 4>&2
 
   # Start PulseAudio (ignore errors)
   echo "Starting pulseaudio..."
-  pulseaudio --daemonize=no --exit-idle-time=-1 --log-level=error &>/dev/null || echo "pulseaudio failed (non-fatal)"
+  pulseaudio --start --exit-idle-time=-1 --log-level=error &>/dev/null || echo "pulseaudio failed (non-fatal)"
 
   # Try to create null sinks if pactl exists
   if command -v pactl >/dev/null 2>&1; then
