@@ -142,8 +142,14 @@ RUN apt-get install --no-install-recommends -y \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
+
 # Allow access to pulseaudio
 RUN adduser zoomrec pulse-access
+
+
+# Create dbus runtime dir and give access
+RUN mkdir -p /var/run/dbus && \
+    chown -R zoomrec:zoomrec /var/run/dbus
 
 USER zoomrec
 
