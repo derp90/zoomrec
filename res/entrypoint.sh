@@ -47,6 +47,13 @@ exec 3>&1 4>&2
   export XDG_CURRENT_DESKTOP=XFCE
   export DESKTOP_SESSION=xfce
 
+  export DISPLAY=:1
+  export QT_QPA_PLATFORM=xcb
+  export XDG_RUNTIME_DIR=/tmp/xdg
+  mkdir -p /tmp/xdg
+  chmod 700 /tmp/xdg
+
+
   # Start VNC server
   echo "Starting vncserver on ${DISPLAY}..."
   vncserver "${DISPLAY}" -depth "${VNC_COL_DEPTH:-24}" -geometry "${VNC_RESOLUTION:-1920x1080}" &>> "$LOG" || { echo "vncserver failed - see $LOG"; }
