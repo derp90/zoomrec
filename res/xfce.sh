@@ -1,9 +1,8 @@
-#!/bin/bash
+xset s 0 0 &
+xset s off &
+
 export DISPLAY=:1
 
-xset -dpms
-xset s off
-xset s noblank
-
-# XFCE session (not --replace)
-startxfce4 &
+# Start xfce
+/usr/bin/startxfce4 --replace > "$HOME"/xfce.log &
+sleep 1
