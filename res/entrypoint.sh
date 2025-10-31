@@ -1,81 +1,103 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+# resilient entrypoint for zoomrec
+set -u  # treat unset vars as errors, but don't exit on command failure (we handle)
+[ "${DEBUG:-}" = "True" ] && set -x
 
-if [[ "$DEBUG" == "True" ]]; then
-  set -x
-fi
+LOG="/tmp/entrypoint.log"
+ZOOM_LOG="/tmp/zoomrec.log"
+START_DIR=${START_DIR:-/start}
+DISPLAY=${DISPLAY:-:1}
 
-cleanup () {
-    kill -s SIGTERM $!
-    exit 0
-}
-trap cleanup SIGINT SIGTERM
+mkdir -p "$START_DIR" "$HOME/.vnc" /tmp
+touch "$LOG" "$ZOOM_LOG"
+exec 3>&1 4>&2
+# tee both stdout and stderr to log
+{
+  echo ">>> ENTRYPOINT START $(date)"
 
-VNC_IP=$(hostname -i)
+  # ensure script CRLF fixed in case it was uploaded from windows
+  if command -v dos2unix >/dev/null 2>&1; then
+    dos2unix "$START_DIR"/entrypoint.sh >/dev/null 2>&1 || true
+  fi
 
-# Change vnc password
-mkdir -p "$HOME/.vnc"
-PASSWD_PATH="$HOME/.vnc/passwd"
+  # create vnc passwd (overwrites)
+  PASSWD_PATH="$HOME/.vnc/passwd"
+  echo "Setting VNC password..."
+  echo "${VNC_PW:-zoomrec}" | vncpasswd -f > "$PASSWD_PATH" || echo "vncpasswd failed, continuing"
+  chmod 600 "$PASSWD_PATH" || true
 
-if [[ -f $PASSWD_PATH ]]; then
-    rm -f "$PASSWD_PATH"
-fi
+  # kill stale X locks (don't fail if not present)
+  echo "Cleaning old X locks..."
+  vncserver -kill "${DISPLAY}" &>/dev/null || true
+  rm -rf /tmp/.X*-lock /tmp/.X11-unix || true
 
-echo "$VNC_PW" | vncpasswd -f >> "$PASSWD_PATH"
-chmod 600 "$PASSWD_PATH"
+  # Start system dbus if not running
+  if [ ! -e /var/run/dbus/pid ]; then
+    echo "Starting system dbus..."
+    dbus-daemon --system --fork || echo "dbus-daemon system failed (non-fatal)"
+  fi
 
-# Start system bus
-if [ ! -e /var/run/dbus/pid ]; then
-    echo "Starting dbus-daemon..."
-    dbus-daemon --system --fork
-fi
+  # Start a session dbus (used by xfce and some apps)
+  echo "Starting session dbus..."
+  eval "$(dbus-launch --sh-syntax --exit-with-session)" || echo "dbus-launch failed (non-fatal)"
+  export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-}"
+  export DBUS_SESSION_BUS_PID="${DBUS_SESSION_BUS_PID:-}"
+  export SESSION_MANAGER="local/$(hostname)/default"
+  export XDG_CURRENT_DESKTOP=XFCE
+  export DESKTOP_SESSION=xfce
 
-# Export session bus
-export $(dbus-launch)
-export SESSION_MANAGER="local/$(hostname)/default"
+  # Start VNC server
+  echo "Starting vncserver on ${DISPLAY}..."
+  vncserver "${DISPLAY}" -depth "${VNC_COL_DEPTH:-24}" -geometry "${VNC_RESOLUTION:-1920x1080}" &>> "$LOG" || { echo "vncserver failed - see $LOG"; }
 
-# Remove old vnc locks
-vncserver -kill "$DISPLAY" &> "$START_DIR"/vnc_startup.log || rm -rf /tmp/.X*-lock /tmp/.X11-unix &> "$START_DIR"/vnc_startup.log
+  # Small delay for X to appear
+  sleep 2
 
-echo -e "\nDISPLAY = $DISPLAY\nVNC_COL_DEPTH = $VNC_COL_DEPTH\nVNC_RESOLUTION = $VNC_RESOLUTION\nVNC_IP = $VNC_IP\nVNC_PORT = $VNC_PORT"
-vncserver "$DISPLAY" -depth "$VNC_COL_DEPTH" -geometry "$VNC_RESOLUTION" &> "$START_DIR"/vnc_startup.log
+  # ensure XAUTHORITY points into user's home
+  export XAUTHORITY="${HOME}/.Xauthority"
+  touch "$XAUTHORITY" || true
+  chmod 600 "$XAUTHORITY" || true
 
-echo -e "\nConnect to $VNC_IP:$VNC_PORT"
+  # Start xfce session, but do not use --replace (start fresh)
+  echo "Starting xfce4 session..."
+  if command -v startxfce4 >/dev/null 2>&1; then
+    # run in background and capture logs
+    startxfce4 >/tmp/xfce.log 2>&1 &
+    echo "xfce started (pid $!)"
+  else
+    echo "startxfce4 not found, skipping desktop start"
+  fi
 
-# Start xfce4
-"$START_DIR"/xfce.sh &> "$START_DIR"/xfce.log
+  sleep 2
 
-# Cleanup to ensure pulseaudio is stateless
-rm -rf /var/run/pulse /var/lib/pulse /home/zoomrec/.config/pulse
+  # Start PulseAudio (ignore errors)
+  echo "Starting pulseaudio..."
+  pulseaudio --daemonize=no --exit-idle-time=-1 --log-level=error &>/dev/null || echo "pulseaudio failed (non-fatal)"
 
-# Start audio
-pulseaudio -D --exit-idle-time=-1 --log-level=error
+  # Try to create null sinks if pactl exists
+  if command -v pactl >/dev/null 2>&1; then
+    echo "Configuring pactl sinks..."
+    pactl load-module module-null-sink sink_name=speaker >/dev/null 2>&1 || true
+    pactl load-module module-null-sink sink_name=microphone >/dev/null 2>&1 || true
+    pactl load-module module-loopback latency_msec=1 source=2 sink=microphone >/dev/null 2>&1 || true
+    pactl load-module module-remap-source master=microphone.monitor source_name=microphone >/dev/null 2>&1 || true
+  else
+    echo "pactl not available"
+  fi
 
-# Create speaker Dummy-Output
-pactl load-module module-null-sink sink_name=speaker sink_properties=device.description="speaker" > /dev/null
-pactl set-source-volume 1 100%
+  # Ensure directories exist for recordings & debug
+  mkdir -p "$REC_PATH" "$AUDIO_PATH" "$IMG_PATH" "${DEBUG_PATH:-/tmp}" || true
 
-# Create microphone Dummy-Output
-pactl load-module module-null-sink sink_name=microphone sink_properties=device.description="microphone" > /dev/null
-pactl set-source-volume 2 100%
+  echo "Launching zoomrec python directly (no xfce4-terminal)..."
+  # run python in background, redirect output to zoom log
+  python3 -u "$HOME/zoomrec.py" 2>&1 | tee -a "$ZOOM_LOG" &
 
-# Map microphone-Output to microphone-Input
-pactl load-module module-loopback latency_msec=1 source=2 sink=microphone > /dev/null
-pactl load-module module-remap-source master=microphone.monitor source_name=microphone source_properties=device.description="microphone" > /dev/null
-# Set microphone Volume
-pactl set-source-volume 3 60%
+  PY_PID=$!
+  echo "zoomrec running as pid ${PY_PID}"
 
-echo -e "\nStart script.."
-sleep 5
-
-# Start python script in separated terminal
-if [[ "$DEBUG" == "True" ]]; then
-  # Wait if something failed
-  xfce4-terminal -H --geometry 85x7+0 --title=zoomrec --hide-toolbar --hide-menubar --hide-scrollbar --hide-borders --zoom=-3 -e "bash -c \"python3 -u ${HOME}/zoomrec.py |& tee /tmp/zoomrec.log\"" &
-else
-  # Exit container if something failed
-    xfce4-terminal --geometry 85x7+0 --title=zoomrec --hide-toolbar --hide-menubar --hide-scrollbar --hide-borders --zoom=-3 -e "bash -c \"python3 -u ${HOME}/zoomrec.py |& tee /tmp/zoomrec.log\"" &
-fi
-
-sleep 1
-tail -F /tmp/zoomrec.log
+  # Keep the container alive and show logs; exit if python dies
+  echo "Tailing zoom logs. Press Ctrl+C to stop container."
+  tail --pid=${PY_PID} -F "$ZOOM_LOG"
+  echo "zoomrec exited, container will stop."
+  echo ">>> ENTRYPOINT END $(date)"
+} 2>&1 | tee -a "$LOG" >&3
