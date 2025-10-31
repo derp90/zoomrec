@@ -87,7 +87,7 @@ exec 3>&1 4>&2
   fi
 
   # Ensure directories exist for recordings & debug
-  mkdir -p "$REC_PATH" "$AUDIO_PATH" "$IMG_PATH" "${DEBUG_PATH:-/tmp}" || true
+  #mkdir -p "$REC_PATH" "$AUDIO_PATH" "$IMG_PATH" "${DEBUG_PATH:-/tmp}" || true
 
   echo "Launching zoomrec python directly (no xfce4-terminal)..."
   # run python in background, redirect output to zoom log
