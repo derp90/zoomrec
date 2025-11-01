@@ -76,7 +76,7 @@ ADD res/entrypoint.sh ${START_DIR}/entrypoint.sh
 ADD zoomrec.py ${HOME}/
 ADD res/img ${HOME}/img
 
-ENV DISPLAY=:99
+ENV DISPLAY=:1
 ENV QT_X11_NO_MITSHM=1
 
 # Set permissions
