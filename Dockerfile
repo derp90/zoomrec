@@ -44,6 +44,7 @@ ADD res/requirements.txt ${HOME}/res/requirements.txt
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ffmpeg \
     libavcodec-extra \
+    gnome-screenshot \
     firefox \
     scrot && \
     pip3 install --upgrade --no-cache-dir -r ${HOME}/res/requirements.txt && \
