@@ -18,6 +18,9 @@ RUN apt-get update && apt-get install -y \
     python3 python3-pip python3-opencv \
     xvfb x11-apps x11-utils \
     dbus-x11 \
+    xauth \
+    libxkbcommon-x11-0 \
+    x11-xserver-utils \
     alsa-utils pulseaudio \
     libgl1-mesa-glx libglib2.0-0 \
     xdotool \
