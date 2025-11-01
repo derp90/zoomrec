@@ -23,19 +23,19 @@ RUN apt-get update && apt-get install -y \
     xdotool \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ADD res/requirements.txt ${HOME}/res/requirements.txt
-
 # Install pulseaudio
 RUN apt-get install --no-install-recommends -y \
         pulseaudio \
-        pavucontrol
+        pavucontrol && \
 # Install firefox
-RUN apt-get install --no-install-recommends -y \
-    firefox
+    apt-get install --no-install-recommends -y \
+        firefox
 
 # Install Zoom (latest)
 RUN wget -O zoom.deb https://zoom.us/client/latest/zoom_amd64.deb && \
     apt-get update && apt-get install -y ./zoom.deb && rm zoom.deb
+
+ADD res/requirements.txt ${HOME}/res/requirements.txt
 
 # Install FFmpeg
 RUN apt-get install --no-install-recommends -y \
