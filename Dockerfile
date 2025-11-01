@@ -16,6 +16,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update && apt-get install -y \
     wget unzip curl gnupg \
     python3 python3-pip python3-opencv \
+    python3-tk python3-dev python3-setuptools \
     xvfb x11-apps x11-utils \
     dbus-x11 \
     xauth \
@@ -30,10 +31,7 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install -y \
     pulseaudio \
     pavucontrol && \
-        
-# Install firefox
-    apt-get install --no-install-recommends -y \
-    firefox
+    rm -rf /var/lib/apt/lists/*
 
 # Install Zoom (latest)
 RUN wget -O zoom.deb https://zoom.us/client/latest/zoom_amd64.deb && \
@@ -44,14 +42,8 @@ ADD res/requirements.txt ${HOME}/res/requirements.txt
 # Install FFmpeg
 RUN apt-get update && apt-get install --no-install-recommends -y \
     ffmpeg \
-    libavcodec-extra && \
-    # Install Python dependencies for script
-    apt-get install --no-install-recommends -y \
-    python3 \
-    python3-pip \
-    python3-tk \
-    python3-dev \
-    python3-setuptools \
+    libavcodec-extra \
+    firefox \
     scrot && \
     pip3 install --upgrade --no-cache-dir -r ${HOME}/res/requirements.txt && \
     # Install VLC - optional
