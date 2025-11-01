@@ -25,10 +25,10 @@ RUN apt-get update && apt-get install -y \
 
 # Install pulseaudio
 RUN apt-get install --no-install-recommends -y \
-        pulseaudio \
-        pavucontrol && \
+        pulseaudio
+       # pavucontrol && \
 # Install firefox
-    apt-get install --no-install-recommends -y \
+RUN apt-get install --no-install-recommends -y \
         firefox
 
 # Install Zoom (latest)
