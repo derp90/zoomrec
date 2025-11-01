@@ -88,5 +88,5 @@ RUN chmod a+x ${START_DIR}/entrypoint.sh && \
     chown -R zoomrec:zoomrec ${HOME} && \
     find ${HOME}/ -name '*.sh' -exec chmod -v a+x {} +
     #find ${HOME}/ -name '*.desktop' -exec chmod -v a+x {} +
-
+EXPOSE 5901
 CMD ${START_DIR}/entrypoint.sh
