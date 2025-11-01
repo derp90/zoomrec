@@ -13,6 +13,7 @@ import requests
 from datetime import datetime, timedelta
 import secrets
 from security import safe_command
+from functools import partial
 
 global ONGOING_MEETING
 global VIDEO_PANEL_HIDED
@@ -910,7 +911,7 @@ def setup_schedule():
             meet_duration = row["duration"]
             meet_description = row["description"]
             if str(row["record"]) == 'true':
-                schedule.every().day.at((datetime.strptime(row["time"], '%H:%M') - timedelta(minutes=5)).strftime('%H:%M')).do(join_if_correct_date(meet_id,meet_pw,meet_duration,meet_description,meet_date))
+                schedule.every().day.at((datetime.strptime(row["time"], '%H:%M') - timedelta(minutes=5)).strftime('%H:%M')).do(partial(join_if_correct_date(meet_id,meet_pw,meet_duration,meet_description,meet_date)))
                 line_count += 1
         logging.info("Added %s meetings to schedule." % line_count)
 
