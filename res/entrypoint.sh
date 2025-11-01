@@ -14,9 +14,6 @@ sleep 2
 
 # Setup PulseAudio runtime
 export PULSE_RUNTIME_PATH=/tmp/pulse
-rm -rf /tmp/pulse
-mkdir -p /tmp/pulse
-chmod 700 /tmp/pulse
 
 # Disable autospawn
 mkdir -p /home/zoomrec/.config/pulse
