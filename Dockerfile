@@ -62,7 +62,8 @@ RUN useradd -m zoomrec
 USER zoomrec
 WORKDIR ${HOME}
 # Allow access to pulseaudio
-RUN adduser zoomrec pulse-access
+RUN groupadd -f pulse-access && groupadd -f pulse
+RUN adduser zoomrec pulse-access || true
 
 USER zoomrec
 # Add home resources
