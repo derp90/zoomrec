@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
 # Install pulseaudio
 RUN apt-get update && apt-get install -y \
     pulseaudio \
-    pavucontrol \
+    pavucontrol && \
         
 # Install firefox
     apt-get install --no-install-recommends -y \
