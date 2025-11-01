@@ -1,12 +1,15 @@
 #!/bin/bash
 set -e
 
+# Fix X Lock
+rm -f /tmp/.X1-lock /tmp/.X11-unix/X1
+
 # Start X virtual framebuffer
-Xvfb :99 -screen 0 1920x1080x24 &
+Xvfb :1 -screen 0 1920x1080x24 &
 sleep 2
 
 # Start PulseAudio
-pulseaudio --start --log-level=error
+pulseaudio --daemonize=no --exit-idle-time=-1 --log-level=error &
 
 # Start D-Bus session
 eval $(dbus-launch --sh-syntax)
