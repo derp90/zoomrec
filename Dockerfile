@@ -49,6 +49,13 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     # Install VLC - optional
     apt-get install --no-install-recommends -y vlc
 
+# Install VNC components
+RUN apt-get update && apt-get install -y \
+    x11vnc \
+    openbox \
+    && rm -rf /var/lib/apt/lists/*
+
+
 # Install Python packages
 RUN pip3 install pyautogui pyscreeze opencv-python pillow schedule
 
