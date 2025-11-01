@@ -4,6 +4,10 @@ set -e
 # Fix stale X locks
 rm -f /tmp/.X1-lock /tmp/.X11-unix/X1
 
+touch "$HOME/.Xauthority"
+chmod 600 "$HOME/.Xauthority"
+chown zoomrec:zoomrec "$HOME/.Xauthority"
+
 # Start Xvfb
 Xvfb :1 -screen 0 1920x1080x24 &
 sleep 2
