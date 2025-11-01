@@ -25,6 +25,9 @@ RUN apt-get update && apt-get install -y \
 
 # Install pulseaudio
 RUN apt-get install --no-install-recommends -y \
+        pulseaudio
+
+RUN apt-get install --no-install-recommends -y \
         pavucontrol
         #pulseaudio \
         #pavucontrol && \
