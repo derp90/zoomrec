@@ -24,9 +24,11 @@ echo "autospawn = no" > /home/zoomrec/.config/pulse/client.conf
 chown -R zoomrec:zoomrec /home/zoomrec/.config/pulse
 
 # Start PulseAudio
+su zoomrec -c "
 pulseaudio --start --log-level=info --exit-idle-time=-1 \
   --disallow-exit --disallow-module-loading \
   --system=false --daemonize=yes
+"
 
 # Start a lightweight window manager for VNC visibility
 openbox &
