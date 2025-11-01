@@ -24,16 +24,12 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install pulseaudio
-RUN apt-get install --no-install-recommends -y \
-        pulseaudio
-
-RUN apt-get install --no-install-recommends -y \
-        pavucontrol
-        #pulseaudio \
-        #pavucontrol && \
+RUN apt-get update && apt-get install --no-install-recommends -y \
+        pulseaudio \
+        pavucontrol \
         
 # Install firefox
-RUN apt-get install --no-install-recommends -y \
+    apt-get install --no-install-recommends -y \
         firefox
 
 # Install Zoom (latest)
@@ -43,7 +39,7 @@ RUN wget -O zoom.deb https://zoom.us/client/latest/zoom_amd64.deb && \
 ADD res/requirements.txt ${HOME}/res/requirements.txt
 
 # Install FFmpeg
-RUN apt-get install --no-install-recommends -y \
+RUN apt-get update && apt-get install --no-install-recommends -y \
         ffmpeg \
         libavcodec-extra && \
     # Install Python dependencies for script
