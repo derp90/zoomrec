@@ -35,4 +35,7 @@ openbox &
 x11vnc -display :1 -forever -nopw -shared -rfbport 5901 &
 
 echo "Starting Zoom automation..."
-python3 /home/zoomrec/zoomrec.py
+while true; do
+    python3 /home/zoomrec/zoomrec.py || echo "Script crashed, restarting in 5s..."
+    sleep 5
+done
