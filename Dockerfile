@@ -63,6 +63,8 @@ RUN pip3 install pyautogui pyscreeze opencv-python pillow schedule
 RUN useradd -m zoomrec
 USER zoomrec
 WORKDIR ${HOME}
+RUN mkdir -p /tmp/pulse
+RUN chmod 700 /tmp/pulse
 # Allow access to pulseaudio
 RUN groupadd -f pulse-access && groupadd -f pulse
 RUN adduser zoomrec pulse-access || true
