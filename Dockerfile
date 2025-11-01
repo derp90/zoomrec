@@ -11,7 +11,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     VNC_PW=zoomrec \
     VNC_PORT=5901 \
     DISPLAY=:1 \
-    MYVER=2
+    MYVER=2 \
+    DEBUG=FALSE
 
 RUN apt-get update && apt-get install -y \
     wget unzip curl gnupg \
