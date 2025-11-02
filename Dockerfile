@@ -10,7 +10,7 @@ ENV HOME=/home/zoomrec \
     VNC_PORT=5901 \
     DISPLAY=:1 \
     MYVER=2 \
-    DEBUG=FALSE
+    DEBUG=FALSE \
     QT_X11_NO_MITSHM=1 \
     DEBIAN_FRONTEND=noninteractive
 
