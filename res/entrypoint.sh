@@ -16,17 +16,18 @@ sleep 2
 export PULSE_RUNTIME_PATH=/tmp/pulse
 
 # Disable autospawn
-mkdir -p /home/zoomrec/.config/pulse
-echo "autospawn = no" > /home/zoomrec/.config/pulse/client.conf
-chown -R zoomrec:zoomrec /home/zoomrec/.config/pulse
+#mkdir -p /home/zoomrec/.config/pulse
+#echo "autospawn = no" > /home/zoomrec/.config/pulse/client.conf
+#chown -R zoomrec:zoomrec /home/zoomrec/.config/pulse
 
 echo "Starting Pulse Audio..."
+pulseaudio --start --exit-idle-time=-1 --log-level=error
 # Start PulseAudio
-su zoomrec -c "
-pulseaudio --start --log-level=info --exit-idle-time=-1 \
-  --disallow-exit --disallow-module-loading \
-  --system=false --daemonize=yes
-"
+#su zoomrec -c "
+#pulseaudio --start --log-level=info --exit-idle-time=-1 \
+#  --disallow-exit --disallow-module-loading \
+#  --system=false --daemonize=yes
+#"
 
 # Start a lightweight window manager for VNC visibility
 openbox &
