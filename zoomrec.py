@@ -266,7 +266,7 @@ def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet
 
 def setup_schedule():
     """
-    Schedule meetings from CSV and join ongoing meetings immediately.
+    Schedule meetings from CSV and join ongoing or imminent meetings immediately.
     """
     try:
         with open(CSV_PATH, mode='r') as csv_file:
@@ -283,10 +283,12 @@ def setup_schedule():
                 if not record:
                     continue
 
-                # Determine the scheduled run time (5 min before meeting start)
-                run_time_str = (datetime.strptime(row["time"], '%H:%M') - timedelta(minutes=5)).strftime('%H:%M')
+                start_dt = datetime.combine(meet_date.date(), datetime.strptime(row["time"], '%H:%M').time())
+                end_dt = start_dt + timedelta(minutes=meet_duration)
+                now = datetime.now()
 
-                # Create partial job for this meeting
+                # Schedule 5 minutes before meeting
+                run_time_str = (start_dt - timedelta(minutes=5)).strftime('%H:%M')
                 job = partial(
                     join_if_correct_date,
                     meet_id,
@@ -295,19 +297,12 @@ def setup_schedule():
                     meet_description,
                     meet_date
                 )
-
-                # Schedule the job
                 schedule.every().day.at(run_time_str).do(job)
                 line_count += 1
 
-                # Immediately check if the meeting is currently ongoing
-                today = datetime.now().date()
-                now_time = datetime.now().time()
-                start_time = datetime.strptime(row["time"], '%H:%M').time()
-                end_time = (datetime.strptime(row["time"], '%H:%M') + timedelta(minutes=meet_duration)).time()
-
-                if meet_date.date() == today and start_time <= now_time <= end_time:
-                    logging.info(f"⏱ Meeting '{meet_description}' is currently running. Joining now...")
+                # If meeting is ongoing or starting within next 5 minutes, join now
+                if start_dt - timedelta(minutes=5) <= now <= end_dt:
+                    logging.info(f"⏱ Meeting '{meet_description}' is imminent or ongoing. Joining now...")
                     job()
 
             logging.info(f"Added {line_count} meetings to schedule.")
@@ -316,6 +311,23 @@ def setup_schedule():
     except Exception as e:
         logging.error(f"Error setting up schedule: {e}")
 
+def list_scheduled_meetings():
+    """
+    Logs all scheduled meetings and their next run times.
+    """
+    jobs = schedule.get_jobs()
+    if not jobs:
+        logging.info("No meetings are currently scheduled.")
+        return
+
+    logging.info("Scheduled meetings:")
+    for job in jobs:
+        try:
+            run_time = job.next_run
+            func_name = job.job_func.func.__name__ if hasattr(job.job_func, "func") else str(job.job_func)
+            logging.info(f"  - {func_name} scheduled at {run_time}")
+        except Exception as e:
+            logging.error(f"Error reading job info: {e}")
 
 
 
@@ -336,4 +348,8 @@ if __name__ == '__main__':
 logging.info("Scheduler started. Waiting for meetings...")
 while True:
     schedule.run_pending()
+     next_run = schedule.next_run()
+        if next_run:
+            remaining = next_run - datetime.now()
+            print(f"Next scheduled meeting in: {remaining}", end="\r", flush=True)
     time.sleep(1)
