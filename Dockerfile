@@ -26,7 +26,28 @@ RUN apt-get update && apt-get install -y \
     alsa-utils pulseaudio \
     libgl1-mesa-glx libglib2.0-0 \
     xdotool \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/* &&
+    apt-get update && apt-get install -y \
+    libxcb1 \
+    libxcb-render0 \
+    libxcb-shm0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-shape0 \
+    libxcb-sync1 \
+    libxcb-xfixes0 \
+    libxcb-xinerama0 \
+    libxcb-xkb1 \
+    libxkbcommon-x11-0 \
+    libglu1 \
+    libxrender1 \
+    libxi6 \
+    libsm6 \
+    libice6
+
 
 # Install pulseaudio
 RUN apt-get update && apt-get install -y \
