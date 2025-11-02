@@ -253,13 +253,13 @@ def join(meet_id, meet_pw, duration, description):
 
 # ---------------- Schedule -----------------
 def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet_date):
-    today = datetime.now().strftime("%Y-%m-%d")
-
-    if meet_date == today:
-        print(f"[{datetime.now()}] ✅ Date match. Joining meeting {meet_id}")
+    today = datetime.now().date()
+    if meet_date.date() == today:
+        logging.info(f"✅ Date match for {meet_id}, joining meeting")
         join(meet_id, meet_pw, meet_duration, meet_description)
     else:
-        print(f"[{datetime.now()}] ⏭️ Skipping {meet_id}, date doesn't match ({meet_date})")
+        logging.info(f"⏭️ Skipping {meet_id}, date does not match ({meet_date.date()} != {today})")
+
 
 def setup_schedule():
     with open(CSV_PATH, mode='r') as csv_file:
