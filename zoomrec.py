@@ -254,11 +254,14 @@ def join(meet_id, meet_pw, duration, description):
 # ---------------- Schedule -----------------
 def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet_date):
     today = datetime.now().date()
+    logging.info(f"📅 Comparing meeting date {meet_date.date()} vs today {today}")
+
     if meet_date.date() == today:
         logging.info(f"✅ Date match for {meet_id}, joining meeting")
         join(meet_id, meet_pw, meet_duration, meet_description)
     else:
         logging.info(f"⏭️ Skipping {meet_id}, date does not match ({meet_date.date()} != {today})")
+
 
 
 def setup_schedule():
