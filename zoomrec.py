@@ -212,7 +212,7 @@ def join(meet_id, meet_pw, duration, description):
     exit_process_by_name("zoom")
 
     join_by_url = meet_id.startswith("http")
-    cmd = f'zoom --url="{meet_id}"' if join_by_url else "zoom"
+    cmd = f'/usr/bin/zoom --url="{meet_id}"' if join_by_url else "/usr/bin/zoom"
     zoom_proc = subprocess.Popen(cmd, shell=True, preexec_fn=os.setsid)
 
     # Wait for Zoom to start
