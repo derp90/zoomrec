@@ -339,8 +339,8 @@ if __name__ == '__main__':
 logging.info("Scheduler started. Waiting for meetings...")
 while True:
     schedule.run_pending()
-     next_run = schedule.next_run()
-        if next_run:
-            remaining = next_run - datetime.now()
-            print(f"Next scheduled meeting in: {remaining}", end="\r", flush=True)
+    next_run = schedule.next_run()
+    if next_run:
+        remaining = next_run - datetime.now()
+        print(f"Next scheduled meeting in: {remaining}", end="\r", flush=True)
     time.sleep(1)
