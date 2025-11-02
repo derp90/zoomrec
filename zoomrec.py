@@ -262,44 +262,61 @@ def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet
     else:
         logging.info(f"⏭️ Skipping {meet_id}, date does not match ({meet_date.date()} != {today})")
 
+def join_ongoing_meetings(meetings):
+    """Join all meetings currently in progress (catch-up mode)."""
+    now = datetime.now()
+    for m in meetings:
+        start_time = m["datetime"]
+        end_time = start_time + timedelta(seconds=m["duration"] + 600)
+
+        if start_time <= now <= end_time:
+            logging.info(f"⚡ Catch-up: '{m['desc']}' meeting already in progress → joining now")
+            join(m["id"], m["pw"], m["duration"], m["desc"])
 
 def setup_schedule():
-    """
-    Reads CSV and schedules meetings.
-    Also immediately joins meetings that are currently ongoing.
-    """
-    with open(CSV_PATH, mode='r') as csv_file:
-        csv_reader = csv.DictReader(csv_file, delimiter=CSV_DELIMITER)
-        line_count = 0
-        now = datetime.now()
+    meetings = []
+    now = datetime.now()
+    with open(CSV_PATH, mode="r") as f:
+        csv_reader = csv.DictReader(f, delimiter=CSV_DELIMITER)
 
         for row in csv_reader:
+            if str(row.get("record", "false")).lower() != "true":
+                continue
+
             meet_date = datetime.strptime(row["date"], "%d/%m/%Y")
-            meet_id = row["id"]
-            meet_pw = row["password"]
-            meet_duration = int(row["duration"]) * 60  # convert minutes to seconds
-            meet_description = row["description"]
+            meet_time = datetime.strptime(row["time"], "%H:%M").time()
 
-            # Only schedule if 'record' is true
-            if str(row.get("record", "false")).lower() == 'true':
-                meet_start_time = datetime.strptime(row["time"], "%H:%M")
-                start_datetime = meet_date.replace(
-                    hour=meet_start_time.hour, minute=meet_start_time.minute
-                )
-                end_datetime = start_datetime + timedelta(seconds=meet_duration + 600)  # add 10 minutes buffer
+            start_dt = datetime.combine(meet_date.date(), meet_time)
+            meet_duration = int(row["duration"]) * 60  # to seconds
 
-                # Schedule the meeting 5 minutes before start
-                run_time = (start_datetime - timedelta(minutes=5)).strftime("%H:%M")
-                job = partial(join_if_correct_date, meet_id, meet_pw, meet_duration, meet_description, meet_date)
-                schedule.every().day.at(run_time).do(job)
-                line_count += 1
+            meetings.append({
+                "id": row["id"],
+                "pw": row["password"],
+                "duration": meet_duration,
+                "desc": row["description"],
+                "datetime": start_dt,
+                "date": meet_date,
+            })
 
-                # Immediate catch-up: if now is within the meeting window, join it immediately
-                if start_datetime <= now <= end_datetime:
-                    logging.info(f"⏱ Catch-up: Meeting '{meet_description}' is currently ongoing. Joining now...")
-                    job()  # call join_if_correct_date immediately
+            # schedule trigger 5 mins early
+            run_time = (start_dt - timedelta(minutes=5)).strftime("%H:%M")
 
-        logging.info(f"Added {line_count} meetings to schedule.")
+            job = partial(
+                join_if_correct_date,
+                row["id"],
+                row["password"],
+                meet_duration,
+                row["description"],
+                meet_date
+            )
+
+            schedule.every().day.at(run_time).do(job)
+            logging.info(f"📅 Scheduled {row['description']} at {run_time} (for {start_dt})")
+
+    # Catch-up on any meeting already running
+    join_ongoing_meetings(meetings)
+
+    logging.info(f"✅ Scheduling setup complete ({len(meetings)} meetings loaded)")
 
 
 def list_scheduled_meetings():
@@ -320,7 +337,11 @@ def list_scheduled_meetings():
         except Exception as e:
             logging.error(f"Error reading job info: {e}")
 
-
+def run_scheduler():
+    logging.info("⏳ Scheduler running, waiting for meetings...")
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 # ---------------- Main -----------------
 def main():
@@ -336,11 +357,8 @@ def main():
 if __name__ == '__main__':
     main()
     
-logging.info("Scheduler started. Waiting for meetings...")
+
 while True:
-    schedule.run_pending()
-    next_run = schedule.next_run()
-    if next_run:
-        remaining = next_run - datetime.now()
-        print(f"Next scheduled meeting in: {remaining}", end="\r", flush=True)
-    time.sleep(1)
+    logging.info("In True Loop")
+    setup_schedule()
+    run_scheduler()
