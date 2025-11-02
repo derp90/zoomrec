@@ -262,27 +262,36 @@ def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet
         print(f"[{datetime.now()}] ⏭️ Skipping {meet_id}, date doesn't match ({meet_date})")
 
 def setup_schedule():
-    for idx, row in schedule_df.iterrows():
-        meet_id = row["meeting_id"]
-        meet_pw = row["meeting_pw"]
-        meet_duration = int(row["duration"])
-        meet_description = row["description"]
-        meet_date = row["date"]
+    with open(CSV_PATH, mode='r') as csv_file:
+        csv_reader = csv.DictReader(csv_file, delimiter=CSV_DELIMITER)
+        line_count = 0
+        for row in csv_reader:
+            meet_date = datetime.strptime(row["date"], "%d/%m/%Y")
+            meet_id = row["id"]
+            meet_pw = row["password"]
+            meet_duration = row["duration"]
+            meet_description = row["description"]
 
-        # Trigger 5 minutes early
-        run_time = (datetime.strptime(row["time"], '%H:%M') - timedelta(minutes=5)).strftime('%H:%M')
+            if str(row.get("record", "false")).lower() == 'true':
+                run_time = (
+                    datetime.strptime(row["time"], '%H:%M') 
+                    - timedelta(minutes=5)
+                ).strftime('%H:%M')
 
-        job = partial(
-            join_if_correct_date,
-            meet_id,
-            meet_pw,
-            meet_duration,
-            meet_description,
-            meet_date
-        )
+                job = partial(
+                    join_if_correct_date,
+                    meet_id, 
+                    meet_pw, 
+                    meet_duration, 
+                    meet_description, 
+                    meet_date
+                )
 
-        print(f"📅 Scheduling {meet_id} at {run_time} (auto join if date matches)")
-        schedule.every().day.at(run_time).do(job)
+                schedule.every().day.at(run_time).do(job)
+                line_count += 1
+
+        logging.info(f"Added {line_count} meetings to schedule.")
+
 
 
 # ---------------- Main -----------------
