@@ -12,7 +12,10 @@ ENV HOME=/home/zoomrec \
     MYVER=2 \
     DEBUG=FALSE \
     QT_X11_NO_MITSHM=1 \
-    DEBIAN_FRONTEND=noninteractive
+    DEBIAN_FRONTEND=noninteractive \
+    QT_QPA_PLATFORM=xcb \
+    QT_PLUGIN_PATH=/opt/zoom/plugins \
+    LD_LIBRARY_PATH=/opt/zoom
 
 RUN apt-get update && apt-get install -y \
     wget unzip curl gnupg \
