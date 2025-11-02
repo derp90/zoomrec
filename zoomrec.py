@@ -238,7 +238,7 @@ def join(meet_id, meet_pw, duration, description):
     pos = locate_image_on_screen('join.png')
     if pos:
         pyautogui.click(*pos)
-      time.sleep(5)
+        time.sleep(5)
         
     # Enter meeting credentials and join
     if not join_by_url:
