@@ -10,6 +10,7 @@ chown zoomrec:zoomrec "$HOME/.Xauthority"
 
 # Start Xvfb
 Xvfb :1 -screen 0 1920x1080x24 &
+export DISPLAY=:1
 sleep 2
 
 # Setup PulseAudio runtime
