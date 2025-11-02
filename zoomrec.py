@@ -265,35 +265,57 @@ def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet
 
 
 def setup_schedule():
-    with open(CSV_PATH, mode='r') as csv_file:
-        csv_reader = csv.DictReader(csv_file, delimiter=CSV_DELIMITER)
-        line_count = 0
-        for row in csv_reader:
-            meet_date = datetime.strptime(row["date"], "%d/%m/%Y")
-            meet_id = row["id"]
-            meet_pw = row["password"]
-            meet_duration = row["duration"]
-            meet_description = row["description"]
+    """
+    Schedule meetings from CSV and join ongoing meetings immediately.
+    """
+    try:
+        with open(CSV_PATH, mode='r') as csv_file:
+            csv_reader = csv.DictReader(csv_file, delimiter=CSV_DELIMITER)
+            line_count = 0
+            for row in csv_reader:
+                meet_date = datetime.strptime(row["date"], "%d/%m/%Y")
+                meet_id = row["id"]
+                meet_pw = row["password"]
+                meet_duration = int(row["duration"])
+                meet_description = row["description"]
+                record = str(row.get("record", "false")).lower() == 'true'
+                
+                if not record:
+                    continue
 
-            if str(row.get("record", "false")).lower() == 'true':
-                run_time = (
-                    datetime.strptime(row["time"], '%H:%M') 
-                    - timedelta(minutes=5)
-                ).strftime('%H:%M')
+                # Determine the scheduled run time (5 min before meeting start)
+                run_time_str = (datetime.strptime(row["time"], '%H:%M') - timedelta(minutes=5)).strftime('%H:%M')
 
+                # Create partial job for this meeting
                 job = partial(
                     join_if_correct_date,
-                    meet_id, 
-                    meet_pw, 
-                    meet_duration, 
-                    meet_description, 
+                    meet_id,
+                    meet_pw,
+                    meet_duration,
+                    meet_description,
                     meet_date
                 )
 
-                schedule.every().day.at(run_time).do(job)
+                # Schedule the job
+                schedule.every().day.at(run_time_str).do(job)
                 line_count += 1
 
-        logging.info(f"Added {line_count} meetings to schedule.")
+                # Immediately check if the meeting is currently ongoing
+                today = datetime.now().date()
+                now_time = datetime.now().time()
+                start_time = datetime.strptime(row["time"], '%H:%M').time()
+                end_time = (datetime.strptime(row["time"], '%H:%M') + timedelta(minutes=meet_duration)).time()
+
+                if meet_date.date() == today and start_time <= now_time <= end_time:
+                    logging.info(f"⏱ Meeting '{meet_description}' is currently running. Joining now...")
+                    job()
+
+            logging.info(f"Added {line_count} meetings to schedule.")
+    except FileNotFoundError:
+        logging.error(f"CSV file {CSV_PATH} not found!")
+    except Exception as e:
+        logging.error(f"Error setting up schedule: {e}")
+
 
 
 
@@ -310,7 +332,8 @@ def main():
 
 if __name__ == '__main__':
     main()
-
+    
+logging.info("Scheduler started. Waiting for meetings...")
 while True:
     schedule.run_pending()
     time.sleep(1)
