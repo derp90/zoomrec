@@ -1,11 +1,9 @@
 FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND=noninteractive \ 
-    HOME=/home/zoomrec \
+ENV HOME=/home/zoomrec \
     TZ=America/Chicago \
     TERM=xfce4-terminal \
     START_DIR=/start \
-    DEBIAN_FRONTEND=noninteractive \
     VNC_RESOLUTION=1920x1080 \
     VNC_COL_DEPTH=24 \
     VNC_PW=zoomrec \
@@ -13,6 +11,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     DISPLAY=:1 \
     MYVER=2 \
     DEBUG=FALSE
+    QT_X11_NO_MITSHM=1 \
+    DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
     wget unzip curl gnupg \
@@ -46,7 +46,17 @@ RUN apt-get update && apt-get install -y \
     libxrender1 \
     libxi6 \
     libsm6 \
-    libice6
+    libice6 \
+    libgtk-3-0 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libxtst6 \
+    libatk1.0-0 \
+    libxss1 \
+    libasound2 \
+    fonts-dejavu-core
 
 
 # Install pulseaudio
