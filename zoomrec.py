@@ -211,9 +211,18 @@ def join(meet_id, meet_pw, duration, description):
     logging.info(f"Joining meeting: {description}")
     exit_process_by_name("zoom")
 
-    join_by_url = meet_id.startswith("http")
-    cmd = f'DISPLAY=:1 /usr/bin/zoom --url="{meet_id}"' if join_by_url else "DISPLAY=:1 /usr/bin/zoom"
-    zoom_proc = subprocess.Popen(cmd, shell=True, preexec_fn=os.setsid)
+    join_by_url = meet_id.startswith("http") or meet_id.startswith("zoommtg://")
+
+    if join_by_url:
+        cmd = ["/usr/bin/zoom", f"--url={meet_id}"]
+    else:
+        cmd = ["/usr/bin/zoom"]
+    
+    env = os.environ.copy()
+    env["DISPLAY"] = ":1"
+
+    zoom_proc = subprocess.Popen(cmd, env=env, preexec_fn=os.setsid)
+
 
     # Wait for Zoom to start
     img_name = 'join.png' if join_by_url else 'join_meeting.png'
