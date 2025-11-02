@@ -29,6 +29,11 @@ IMG_PATH = os.path.join(BASE_PATH, "img")
 REC_PATH = os.path.join(BASE_PATH, "recordings")
 AUDIO_PATH = os.path.join(BASE_PATH, "audio")
 DEBUG_PATH = os.path.join(REC_PATH, "screenshots")
+os.environ.pop("QT_PLUGIN_PATH", None)
+os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH", None)
+os.environ["QT_QPA_PLATFORM"] = "xcb"
+os.environ["QT_PLUGIN_PATH"] = "/opt/zoom/plugins"
+os.environ["LD_LIBRARY_PATH"] = "/opt/zoom"
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
