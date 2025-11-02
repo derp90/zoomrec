@@ -251,14 +251,14 @@ def join(meet_id, meet_pw, duration, description):
     else:
         pyautogui.hotkey('ctrl','a')
         pyautogui.write(DISPLAY_NAME, interval=0.1)
-        pyautogui.press(['tab','space','tab','tab','space','tab','tab','space'])
+#        pyautogui.press(['tab','space','tab','tab','space','tab','tab','space'])
 
-    time.sleep(2)
-    pos = locate_image_on_screen('join_meeting_password.png')
-    if pos:
-        pyautogui.click(*pos)
-        pyautogui.write(meet_pw)
-        pyautogui.press('enter')
+#    time.sleep(2)
+#    pos = locate_image_on_screen('join_meeting_password.png')
+#    if pos:
+#        pyautogui.click(*pos)
+#        pyautogui.write(meet_pw)
+#        pyautogui.press('enter')
 
     time.sleep(5)
     join_audio(description)
