@@ -34,9 +34,14 @@ os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH", None)
 os.environ["QT_QPA_PLATFORM"] = "xcb"
 os.environ["QT_PLUGIN_PATH"] = "/opt/zoom/plugins"
 os.environ["LD_LIBRARY_PATH"] = "/opt/zoom"
-scheduled_meetings = set()
+
+# Scheduler state
+scheduled_meetings = set()   # keys of scheduled meetings: "id|iso_datetime"
 csv_last_load = None
 CSV_RELOAD_SECONDS = 60  # reload CSV every minute
+
+# Active meetings (currently being handled/launched)
+active_meetings = set()
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
@@ -68,7 +73,19 @@ def locate_image_on_screen(image_name, threshold=0.9):
         return None
 
     template = cv2.imread(img_path)
+    if template is None:
+        logging.error(f"Failed to load template image: {img_path}")
+        return None
+
     screenshot = grab_screenshot()
+    # ensure template fits inside screenshot
+    th, tw = template.shape[:2]
+    sh, sw = screenshot.shape[:2]
+    if th > sh or tw > sw:
+        if DEBUG:
+            logging.warning(f"Template {image_name} is larger than screenshot; skipping.")
+        return None
+
     res = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
@@ -128,7 +145,7 @@ def exit_process_by_name(name):
                 os.kill(p['pid'], signal.SIGKILL)
             except Exception as ex:
                 logging.error(f"Could not terminate {name}[{p['pid']}]: {ex}")
-                
+
 def _cleanup_when_zoom_exits(pid, meet_id, poll_interval=1):
     """Background waiter that removes meet_id from active_meetings after Zoom process ends."""
     try:
@@ -142,7 +159,6 @@ def _cleanup_when_zoom_exits(pid, meet_id, poll_interval=1):
         if meet_id in active_meetings:
             active_meetings.discard(meet_id)
             logging.info(f"🧹 Meeting {meet_id} ended — removed from active registry.")
-
 
 def show_toolbars():
     width, height = pyautogui.size()
@@ -252,7 +268,11 @@ def join(meet_id, meet_pw, duration, description):
     env["DISPLAY"] = ":1"
 
     # Launch Zoom
-    zoom_proc = subprocess.Popen(cmd, env=env, preexec_fn=os.setsid)
+    try:
+        zoom_proc = subprocess.Popen(cmd, env=env, preexec_fn=os.setsid)
+    except Exception as e:
+        logging.error(f"Failed to start Zoom: {e}")
+        return
 
     # Register as active immediately (prevents racing duplicates)
     active_meetings.add(meet_id)
@@ -272,7 +292,7 @@ def join(meet_id, meet_pw, duration, description):
     if pos:
         pyautogui.click(*pos)
         time.sleep(5)
-        
+
     # Enter meeting credentials and join
     if not join_by_url:
         pyautogui.press(['tab','tab'])
@@ -284,14 +304,6 @@ def join(meet_id, meet_pw, duration, description):
     else:
         pyautogui.hotkey('ctrl','a')
         pyautogui.write(DISPLAY_NAME, interval=0.1)
-#        pyautogui.press(['tab','space','tab','tab','space','tab','tab','space'])
-
-#    time.sleep(2)
-#    pos = locate_image_on_screen('join_meeting_password.png')
-#    if pos:
-#        pyautogui.click(*pos)
-#        pyautogui.write(meet_pw)
-#        pyautogui.press('enter')
 
     time.sleep(5)
     join_audio(description)
@@ -303,7 +315,7 @@ def join(meet_id, meet_pw, duration, description):
     # Optional Telegram notification
     send_telegram_message(f"Meeting joined: {description}")
 
-# ---------------- Schedule -----------------
+# ---------------- Schedule & CSV reload -----------------
 def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet_date):
     today = datetime.now().date()
     logging.info(f"📅 Comparing meeting date {meet_date.date()} vs today {today}")
@@ -319,14 +331,12 @@ def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet
     else:
         logging.info(f"⏭️ Skipping {meet_id}, date does not match ({meet_date.date()} != {today})")
 
-
 def join_ongoing_meetings(meetings):
     """Join all meetings currently in progress (catch-up mode)."""
     now = datetime.now()
     for m in meetings:
         start_time = m["datetime"]
         end_time = start_time + timedelta(seconds=m["duration"] + 600)
-
         if start_time <= now <= end_time:
             logging.info(f"⚡ Catch-up: '{m['desc']}' meeting already in progress → joining now")
             join(m["id"], m["pw"], m["duration"], m["desc"])
@@ -334,50 +344,57 @@ def join_ongoing_meetings(meetings):
 def load_meetings_from_csv():
     """Load meetings from CSV file and return structured list."""
     meetings = []
+    try:
+        with open(CSV_PATH, mode="r") as f:
+            csv_reader = csv.DictReader(f, delimiter=CSV_DELIMITER)
+            for row in csv_reader:
+                if str(row.get("record", "false")).lower() != "true":
+                    continue
 
-    with open(CSV_PATH, mode="r") as f:
-        csv_reader = csv.DictReader(f, delimiter=CSV_DELIMITER)
-        for row in csv_reader:
-            if str(row.get("record", "false")).lower() != "true":
-                continue
+                meet_date = datetime.strptime(row["date"], "%d/%m/%Y")
+                meet_time = datetime.strptime(row["time"], "%H:%M").time()
+                start_dt = datetime.combine(meet_date.date(), meet_time)
+                meet_duration = int(row["duration"]) * 60
 
-            meet_date = datetime.strptime(row["date"], "%d/%m/%Y")
-            meet_time = datetime.strptime(row["time"], "%H:%M").time()
-            start_dt = datetime.combine(meet_date.date(), meet_time)
-            meet_duration = int(row["duration"]) * 60
-
-            meetings.append({
-                "id": row["id"],
-                "pw": row["password"],
-                "duration": meet_duration,
-                "desc": row["description"],
-                "datetime": start_dt,
-                "date": meet_date,
-            })
+                meetings.append({
+                    "id": row["id"],
+                    "pw": row["password"],
+                    "duration": meet_duration,
+                    "desc": row["description"],
+                    "datetime": start_dt,
+                    "date": meet_date,
+                })
+    except FileNotFoundError:
+        logging.error(f"CSV file not found: {CSV_PATH}")
+    except Exception as e:
+        logging.error(f"Error reading CSV: {e}")
     return meetings
 
-
 def schedule_new_meetings(meetings):
-    """Schedule only new meetings — skip ones already loaded."""
+    """Schedule only new meetings — skip ones already loaded.
+       If run_time already passed but meeting still active, join immediately (early/catch-up)."""
+    now_dt = datetime.now()
     for m in meetings:
         meeting_key = f"{m['id']}|{m['datetime'].isoformat()}"
         if meeting_key in scheduled_meetings:
             continue  # already scheduled
 
-        run_time = (m["datetime"] - timedelta(minutes=5)).strftime("%H:%M")
-        job = partial(
-            join_if_correct_date,
-            m["id"],
-            m["pw"],
-            m["duration"],
-            m["desc"],
-            m["date"]
-        )
-        schedule.every().day.at(run_time).do(job)
+        run_dt = m["datetime"] - timedelta(minutes=5)
+        end_dt = m["datetime"] + timedelta(seconds=m["duration"] + 600)
+
+        # If we're already past the early-join time but meeting hasn't ended, join immediately (catch-up / late-add)
+        if run_dt <= now_dt <= end_dt:
+            logging.info(f"⚡ Immediate join (late or already-running) for {m['desc']} (start={m['datetime']})")
+            scheduled_meetings.add(meeting_key)
+            join(m["id"], m["pw"], m["duration"], m["desc"])
+            continue
+
+        # Otherwise schedule for early join
+        run_time_str = run_dt.strftime("%H:%M")
+        job = partial(join_if_correct_date, m["id"], m["pw"], m["duration"], m["desc"], m["date"])
+        schedule.every().day.at(run_time_str).do(job)
         scheduled_meetings.add(meeting_key)
-
-        logging.info(f"📅 Scheduled: {m['desc']} at {run_time} for {m['datetime']}")
-
+        logging.info(f"📅 Scheduled: {m['desc']} at {run_time_str} for {m['datetime']}")
 
 def refresh_schedule():
     """Reload CSV periodically and schedule newly added meetings."""
@@ -393,18 +410,6 @@ def refresh_schedule():
     meetings = load_meetings_from_csv()
     schedule_new_meetings(meetings)
 
-    # Catch-up logic only runs *once per meeting key*
-    now_dt = datetime.now()
-    for m in meetings:
-        meeting_key = f"{m['id']}|{m['datetime'].isoformat()}"
-        if meeting_key not in scheduled_meetings:  # newly found meeting
-            start = m["datetime"]
-            end = start + timedelta(seconds=m["duration"] + 600)
-            if start <= now_dt <= end:
-                logging.info(f"⚡ Catch-up join: {m['desc']}")
-                join(m["id"], m["pw"], m["duration"], m["desc"])
-
-
 # ---------------- Main -----------------
 def main():
     try:
@@ -418,8 +423,8 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
 
+# scheduler loop (refresh CSV frequently, run pending jobs)
 while True:
     refresh_schedule()
     schedule.run_pending()
