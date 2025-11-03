@@ -34,6 +34,7 @@ os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH", None)
 os.environ["QT_QPA_PLATFORM"] = "xcb"
 os.environ["QT_PLUGIN_PATH"] = "/opt/zoom/plugins"
 os.environ["LD_LIBRARY_PATH"] = "/opt/zoom"
+active_meetings = set()
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
@@ -125,6 +126,21 @@ def exit_process_by_name(name):
                 os.kill(p['pid'], signal.SIGKILL)
             except Exception as ex:
                 logging.error(f"Could not terminate {name}[{p['pid']}]: {ex}")
+                
+def _cleanup_when_zoom_exits(pid, meet_id, poll_interval=1):
+    """Background waiter that removes meet_id from active_meetings after Zoom process ends."""
+    try:
+        proc = psutil.Process(pid)
+        proc.wait()  # blocks until process exits
+    except Exception:
+        # fallback: poll until pid disappears
+        while psutil.pid_exists(pid):
+            time.sleep(poll_interval)
+    finally:
+        if meet_id in active_meetings:
+            active_meetings.discard(meet_id)
+            logging.info(f"🧹 Meeting {meet_id} ended — removed from active registry.")
+
 
 def show_toolbars():
     width, height = pyautogui.size()
@@ -214,6 +230,13 @@ class HideViewOptionsThread(threading.Thread):
 def join(meet_id, meet_pw, duration, description):
     global VIDEO_PANEL_HIDED
     logging.info(f"Joining meeting: {description}")
+
+    # Guard: avoid double-join for same meeting id
+    if meet_id in active_meetings:
+        logging.info(f"🚫 Already handling meeting {meet_id}; skipping duplicate join.")
+        return
+
+    # Kill existing zoom instances (so we start a fresh one)
     exit_process_by_name("zoom")
 
     join_by_url = meet_id.startswith("http") or meet_id.startswith("zoommtg://")
@@ -222,12 +245,20 @@ def join(meet_id, meet_pw, duration, description):
         cmd = ["/usr/bin/zoom", f"--url={meet_id}"]
     else:
         cmd = ["/usr/bin/zoom"]
-    
+
     env = os.environ.copy()
     env["DISPLAY"] = ":1"
 
+    # Launch Zoom
     zoom_proc = subprocess.Popen(cmd, env=env, preexec_fn=os.setsid)
 
+    # Register as active immediately (prevents racing duplicates)
+    active_meetings.add(meet_id)
+    logging.info(f"🔒 Registered meeting {meet_id} as active. active_meetings={active_meetings}")
+
+    # Start cleanup thread to remove active flag when Zoom exits
+    t = threading.Thread(target=_cleanup_when_zoom_exits, args=(zoom_proc.pid, meet_id), daemon=True)
+    t.start()
 
     # Wait for Zoom to start
     img_name = 'join.png' if join_by_url else 'join_meeting.png'
@@ -275,11 +306,17 @@ def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet
     today = datetime.now().date()
     logging.info(f"📅 Comparing meeting date {meet_date.date()} vs today {today}")
 
+    # Guard: if already active, skip
+    if meet_id in active_meetings:
+        logging.info(f"🚫 Meeting {meet_id} already active; skipping duplicate join.")
+        return
+
     if meet_date.date() == today:
         logging.info(f"✅ Date match for {meet_id}, joining meeting")
         join(meet_id, meet_pw, meet_duration, meet_description)
     else:
         logging.info(f"⏭️ Skipping {meet_id}, date does not match ({meet_date.date()} != {today})")
+
 
 def join_ongoing_meetings(meetings):
     """Join all meetings currently in progress (catch-up mode)."""
@@ -293,6 +330,8 @@ def join_ongoing_meetings(meetings):
             join(m["id"], m["pw"], m["duration"], m["desc"])
 
 def setup_schedule():
+    global scheduled_meetings
+
     meetings = []
     now = datetime.now()
     with open(CSV_PATH, mode="r") as f:
@@ -306,7 +345,8 @@ def setup_schedule():
             meet_time = datetime.strptime(row["time"], "%H:%M").time()
 
             start_dt = datetime.combine(meet_date.date(), meet_time)
-            meet_duration = int(row["duration"]) * 60  # to seconds
+            meet_duration = int(row["duration"]) * 60  # seconds
+            meeting_key = f"{row['id']}|{start_dt.isoformat()}"
 
             meetings.append({
                 "id": row["id"],
@@ -317,7 +357,10 @@ def setup_schedule():
                 "date": meet_date,
             })
 
-            # schedule trigger 5 mins early
+            # avoid re-scheduling already-loaded meetings
+            if meeting_key in scheduled_meetings:
+                continue
+
             run_time = (start_dt - timedelta(minutes=5)).strftime("%H:%M")
 
             job = partial(
@@ -330,12 +373,15 @@ def setup_schedule():
             )
 
             schedule.every().day.at(run_time).do(job)
+            scheduled_meetings.add(meeting_key)
+
             logging.info(f"📅 Scheduled {row['description']} at {run_time} (for {start_dt})")
 
-    # Catch-up on any meeting already running
-    join_ongoing_meetings(meetings)
+    # Catch-up once per run, but avoid duplicate joins on re-loads
+    join_ongoing_meetings([m for m in meetings if f"{m['id']}|{m['datetime'].isoformat()}" not in scheduled_meetings])
 
-    logging.info(f"✅ Scheduling setup complete ({len(meetings)} meetings loaded)")
+    logging.info(f"✅ Scheduling setup complete, {len(scheduled_meetings)} active entries")
+
 
 
 def list_scheduled_meetings():
