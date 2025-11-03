@@ -34,7 +34,9 @@ os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH", None)
 os.environ["QT_QPA_PLATFORM"] = "xcb"
 os.environ["QT_PLUGIN_PATH"] = "/opt/zoom/plugins"
 os.environ["LD_LIBRARY_PATH"] = "/opt/zoom"
-active_meetings = set()
+scheduled_meetings = set()
+csv_last_load = None
+CSV_RELOAD_SECONDS = 60  # reload CSV every minute
 
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
@@ -329,24 +331,20 @@ def join_ongoing_meetings(meetings):
             logging.info(f"⚡ Catch-up: '{m['desc']}' meeting already in progress → joining now")
             join(m["id"], m["pw"], m["duration"], m["desc"])
 
-def setup_schedule():
-    global scheduled_meetings
-
+def load_meetings_from_csv():
+    """Load meetings from CSV file and return structured list."""
     meetings = []
-    now = datetime.now()
+
     with open(CSV_PATH, mode="r") as f:
         csv_reader = csv.DictReader(f, delimiter=CSV_DELIMITER)
-
         for row in csv_reader:
             if str(row.get("record", "false")).lower() != "true":
                 continue
 
             meet_date = datetime.strptime(row["date"], "%d/%m/%Y")
             meet_time = datetime.strptime(row["time"], "%H:%M").time()
-
             start_dt = datetime.combine(meet_date.date(), meet_time)
-            meet_duration = int(row["duration"]) * 60  # seconds
-            meeting_key = f"{row['id']}|{start_dt.isoformat()}"
+            meet_duration = int(row["duration"]) * 60
 
             meetings.append({
                 "id": row["id"],
@@ -356,57 +354,56 @@ def setup_schedule():
                 "datetime": start_dt,
                 "date": meet_date,
             })
-
-            # avoid re-scheduling already-loaded meetings
-            if meeting_key in scheduled_meetings:
-                continue
-
-            run_time = (start_dt - timedelta(minutes=5)).strftime("%H:%M")
-
-            job = partial(
-                join_if_correct_date,
-                row["id"],
-                row["password"],
-                meet_duration,
-                row["description"],
-                meet_date
-            )
-
-            schedule.every().day.at(run_time).do(job)
-            scheduled_meetings.add(meeting_key)
-
-            logging.info(f"📅 Scheduled {row['description']} at {run_time} (for {start_dt})")
-
-    # Catch-up once per run, but avoid duplicate joins on re-loads
-    join_ongoing_meetings([m for m in meetings if f"{m['id']}|{m['datetime'].isoformat()}" not in scheduled_meetings])
-
-    logging.info(f"✅ Scheduling setup complete, {len(scheduled_meetings)} active entries")
+    return meetings
 
 
+def schedule_new_meetings(meetings):
+    """Schedule only new meetings — skip ones already loaded."""
+    for m in meetings:
+        meeting_key = f"{m['id']}|{m['datetime'].isoformat()}"
+        if meeting_key in scheduled_meetings:
+            continue  # already scheduled
 
-def list_scheduled_meetings():
-    """
-    Logs all scheduled meetings and their next run times.
-    """
-    jobs = schedule.get_jobs()
-    if not jobs:
-        logging.info("No meetings are currently scheduled.")
-        return
+        run_time = (m["datetime"] - timedelta(minutes=5)).strftime("%H:%M")
+        job = partial(
+            join_if_correct_date,
+            m["id"],
+            m["pw"],
+            m["duration"],
+            m["desc"],
+            m["date"]
+        )
+        schedule.every().day.at(run_time).do(job)
+        scheduled_meetings.add(meeting_key)
 
-    logging.info("Scheduled meetings:")
-    for job in jobs:
-        try:
-            run_time = job.next_run
-            func_name = job.job_func.func.__name__ if hasattr(job.job_func, "func") else str(job.job_func)
-            logging.info(f"  - {func_name} scheduled at {run_time}")
-        except Exception as e:
-            logging.error(f"Error reading job info: {e}")
+        logging.info(f"📅 Scheduled: {m['desc']} at {run_time} for {m['datetime']}")
 
-def run_scheduler():
-    logging.info("⏳ Scheduler running, waiting for meetings...")
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+
+def refresh_schedule():
+    """Reload CSV periodically and schedule newly added meetings."""
+    global csv_last_load
+
+    now = time.time()
+    if csv_last_load and now - csv_last_load < CSV_RELOAD_SECONDS:
+        return  # not time to reload yet
+
+    logging.info("🔄 Reloading meetings CSV...")
+    csv_last_load = now
+
+    meetings = load_meetings_from_csv()
+    schedule_new_meetings(meetings)
+
+    # Catch-up logic only runs *once per meeting key*
+    now_dt = datetime.now()
+    for m in meetings:
+        meeting_key = f"{m['id']}|{m['datetime'].isoformat()}"
+        if meeting_key not in scheduled_meetings:  # newly found meeting
+            start = m["datetime"]
+            end = start + timedelta(seconds=m["duration"] + 600)
+            if start <= now_dt <= end:
+                logging.info(f"⚡ Catch-up join: {m['desc']}")
+                join(m["id"], m["pw"], m["duration"], m["desc"])
+
 
 # ---------------- Main -----------------
 def main():
@@ -416,14 +413,14 @@ def main():
     except Exception:
         logging.error("Failed to create screenshot folder!")
         raise
-
-    setup_schedule()
+    logging.info("✅ Zoom Recorder Started")
+    refresh_schedule()  # initial load
 
 if __name__ == '__main__':
     main()
     
 
 while True:
-    logging.info("In True Loop")
-    setup_schedule()
-    run_scheduler()
+    refresh_schedule()
+    schedule.run_pending()
+    time.sleep(1)
