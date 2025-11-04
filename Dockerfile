@@ -32,6 +32,10 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/* && \
     apt-get update && apt-get install -y \
     libxcb1 \
+    git \
+    nginx-extras \
+    supervisor \
+    xterm \
     libxcb-render0 \
     libxcb-shm0 \
     libxcb-icccm4 \
@@ -95,6 +99,9 @@ RUN apt-get update && apt-get install -y \
 # Install Python packages
 RUN pip3 install pyautogui pyscreeze opencv-python pillow schedule
 
+#clone noVNC
+RUN git clone https://github.com/novnc/noVNC.git /var/www/html/novnc
+
 # Create user
 RUN useradd -m zoomrec
 USER zoomrec
@@ -147,4 +154,5 @@ RUN CONFIG=/home/zoomrec/.config/zoomus.conf \
  \
  && chown -R zoomrec:zoomrec /home/zoomrec/.config
 EXPOSE 5901
+EXPOSE 8080
 CMD ${START_DIR}/entrypoint.sh
