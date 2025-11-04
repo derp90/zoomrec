@@ -38,7 +38,7 @@ pulseaudio --start --exit-idle-time=-1 --log-level=info
 openbox &
 
 # Start x11vnc (no password for now — update later)
-x11vnc -display :1 -forever -nopw -shared -rfbport 5901 &
+x11vnc -display :1 -forever -o /dev/null -nopw -shared -rfbport 5901 &
 /var/www/html/novnc/utils/launch.sh --vnc localhost:5901 --listen 8080 &
 
 echo "Starting Zoom automation..."
