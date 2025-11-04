@@ -126,6 +126,35 @@ def send_telegram_message(text):
             logging.error("Telegram message failed multiple times. Check credentials.")
             done = True
 
+def check_connecting(zoom_pid, start_date, duration):
+    # Check if connecting
+    check_periods = 0
+    connecting = False
+    # Check if connecting
+    pos = locate_image_on_screen(
+    if pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'connecting.png'), confidence=0.9) is not None:
+        connecting = True
+        logging.info("Connecting..")
+
+    # Wait while connecting
+    # Exit when meeting ends after time
+    while connecting:
+        if (datetime.now() - start_date).total_seconds() > duration:
+            logging.info("Meeting ended after time!")
+            logging.info("Exit Zoom!")
+            os.killpg(os.getpgid(zoom_pid), signal.SIGQUIT)
+            return
+
+        if pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'connecting.png'), confidence=0.9) is None:
+            logging.info("Maybe not connecting anymore..")
+            check_periods += 1
+            if check_periods >= 2:
+                connecting = False
+                logging.info("Not connecting anymore..")
+                return
+        time.sleep(2)
+
+
 def find_process_id_by_name(process_name):
     procs = []
     for proc in psutil.process_iter(attrs=['pid', 'name']):
@@ -287,14 +316,11 @@ def join(meet_id, meet_pw, duration, description):
     while not locate_image_on_screen(img_name):
         logging.info("Waiting for Zoom to be ready...")
         time.sleep(1)
-
     time.sleep(1)
-    logging.info("clicking first join")
-    pos = locate_image_on_screen('join.png')
-    if pos:
-        logging.info("found first join")
-        pyautogui.click(*pos)
-        time.sleep(5)
+    
+    logging.info("Zoom started!")
+    start_date = datetime.now()
+
     
     # Enter meeting credentials and join
     if not join_by_url:
@@ -308,10 +334,10 @@ def join(meet_id, meet_pw, duration, description):
     else:
         logging.info("Putting in display name")
         pyautogui.hotkey('ctrl','a')
-        pyautogui.write(DISPLAY_NAME, interval=0.1)
+        pyautogui.write(DISPLAY_NAME, interval=0.05)
         pyautogui.press('enter')
 
-    time.sleep(15)
+    time.sleep(3)
     join_audio(description)
 
     # Start background threads
