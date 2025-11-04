@@ -72,6 +72,9 @@ RUN apt-get update && apt-get install -y \
 RUN wget -O zoom.deb https://zoom.us/client/latest/zoom_amd64.deb && \
     apt-get update && apt-get install -y ./zoom.deb && rm zoom.deb
 
+#Set AlwaysShowVideoPreviewDialog to false in config file
+CMD sed -i '/^AudioAutoAdjust=false$/a AlwaysShowVideoPreviewDialog=false\n' ~/.config/zoomus.conf
+
 ADD res/requirements.txt ${HOME}/res/requirements.txt
 
 # Install FFmpeg
