@@ -131,8 +131,7 @@ def check_connecting(zoom_pid, start_date, duration):
     check_periods = 0
     connecting = False
     # Check if connecting
-    pos = locate_image_on_screen(
-    if pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'connecting.png'), confidence=0.9) is not None:
+    if locate_image_on_screen('connecting.png'):
         connecting = True
         logging.info("Connecting..")
 
@@ -145,7 +144,7 @@ def check_connecting(zoom_pid, start_date, duration):
             os.killpg(os.getpgid(zoom_pid), signal.SIGQUIT)
             return
 
-        if pyautogui.locateCenterOnScreen(os.path.join(IMG_PATH, 'connecting.png'), confidence=0.9) is None:
+        if locate_image_on_screen('connecting.png') is false:
             logging.info("Maybe not connecting anymore..")
             check_periods += 1
             if check_periods >= 2:
@@ -154,6 +153,31 @@ def check_connecting(zoom_pid, start_date, duration):
                 return
         time.sleep(2)
 
+def check_error():
+    # Sometimes invalid id error is displayed
+    if locate_image_on_screen('invalid_meeting_id.png') is not None:
+        logging.error("Maybe a invalid meeting id was inserted..")
+        left = False
+        try:
+            pos = locate_image_on_screen('leave.png')
+            pyautogui.click(*pos)
+            left = True
+        except TypeError:
+            pass
+            # Valid id
+
+        if left:
+            if locate_image_on_screen('join_meeting.png') is not None:
+                logging.error("Invalid meeting id!")
+                return False
+        else:
+            return True
+
+    if locate_image_on_screen('authorized_attendees_only.png') is not None:
+        logging.error("This meeting is for authorized attendees only!")
+        return False
+
+    return True
 
 def find_process_id_by_name(process_name):
     procs = []
@@ -313,7 +337,7 @@ def join(meet_id, meet_pw, duration, description):
 
     # Wait for Zoom to start
     img_name = 'join.png' if join_by_url else 'join_meeting.png'
-    while not locate_image_on_screen(img_name):
+    while locate_image_on_screen(img_name) is not None:
         logging.info("Waiting for Zoom to be ready...")
         time.sleep(1)
     time.sleep(1)
@@ -329,23 +353,285 @@ def join(meet_id, meet_pw, duration, description):
         pyautogui.press(['tab','tab'])
         pyautogui.hotkey('ctrl','a')
         pyautogui.write(DISPLAY_NAME, interval=0.1)
+        #Set options?
         pyautogui.press(['tab','space','tab','tab','space','tab','tab','space'])
+        #this enter might not be needed with the tab spaces
         pyautogui.press('enter')
     else:
         logging.info("Putting in display name")
         pyautogui.hotkey('ctrl','a')
         pyautogui.write(DISPLAY_NAME, interval=0.05)
         pyautogui.press('enter')
-
+    
+    #check for errors, this returns true for no errors, need to do something if false, build it into check_error later
+    # TODO
+    # TODO
+    check_error()
     time.sleep(3)
-    join_audio(description)
+    
+    wait_for_host()
 
+    check_connecting(zoom.pid, start_date, duration)
+    logging.info("Joined meeting..")
+    check_inital_join_states() #check if there are polls, recording, etc and clear the dialogs
+    
     # Start background threads
     BackgroundThread()
+
+    if not join_audio(description):
+        logging.info("Exit!")
+        os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
+        if DEBUG:
+            os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
+            atexit.unregister(os.killpg)
+        time.sleep(2)
+        join(meet_id, meet_pw, duration, description)
+    # 'Say' something if path available (mounted) disabled atm, #todo later
+    #if os.path.exists(AUDIO_PATH):
+    #    play_audio(description)
+        
+    
+    setup_view_and_fullscreen()
+
+    start_recording()
+    
     HideViewOptionsThread()
 
     # Optional Telegram notification
     send_telegram_message(f"Meeting joined: {description}")
+    meeting_running = True
+    while meeting_running:
+        time_remaining = end_date - datetime.now()
+        if time_remaining.total_seconds() < 0 or not ONGOING_MEETING:
+            meeting_running = False
+        else:
+            print(f"Meeting ends in {time_remaining}", end="\r", flush=True)
+        time.sleep(5)
+
+    logging.info("Meeting ends at %s" % datetime.now())
+
+    # Close everything
+    if DEBUG and ffmpeg_debug is not None:
+        os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
+        atexit.unregister(os.killpg)
+
+    os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
+    os.killpg(os.getpgid(ffmpeg.pid), signal.SIGQUIT)
+    atexit.unregister(os.killpg)
+
+    if not ONGOING_MEETING:
+        try:
+            # Press OK after meeting ended by host
+            pos = locate_image_on_screen('ok.png')
+            pyautogui.click(*pos)
+        except TypeError:
+            if DEBUG:
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT) + "-" + description) + "_ok_error.png")
+                
+    send_telegram_message("Meeting '{}' ended.".format(description))
+
+def check_inital_join_states():
+     # Check if recording warning is shown at the beginning
+    if (locate_image_on_screen('meeting_is_being_recorded.png') is not None):
+        logging.info("This meeting is being recorded..")
+        try:
+            pos = locate_image_on_screen('got_it.png')
+            pyautogui.click(*pos)
+            logging.info("Accepted recording..")
+        except TypeError:
+            logging.error("Could not accept recording!")
+
+    # Check if host is sharing poll results at the beginning
+    if (locate_image_on_screen('host_is_sharing_poll_results.png') is not None):
+        logging.info("Host is sharing poll results..")
+        try:
+            pos = locate_image_on_screen('host_is_sharing_poll_results.png')
+            pyautogui.click(*pos)
+            try:
+                pos = locate_image_on_screen('exit.png')
+                pyautogui.click(*pos)
+                logging.info("Closed poll results window..")
+            except TypeError:
+                logging.error("Could not exit poll results window!")
+                if DEBUG:
+                    pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                        TIME_FORMAT) + "-" + description) + "_close_poll_results_error.png")
+        except TypeError:
+            logging.error("Could not find poll results window anymore!")
+            if DEBUG:
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT) + "-" + description) + "_find_poll_results_error.png")
+
+def wait_for_host():
+    if locate_image_on_screen('waiting_room.png') is not None:
+        in_waitingroom = True
+        logging.info("Please wait, the meeting host will let you in soon..")
+
+    # Wait while host will let you in
+    # Exit when meeting ends after time
+    while in_waitingroom:
+        if (datetime.now() - start_date).total_seconds() > duration:
+            logging.info("Meeting ended after time!")
+            logging.info("Exit Zoom!")
+            os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
+            if DEBUG:
+                os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
+                atexit.unregister(os.killpg)
+            return
+
+        if locate_image_on_screen('waiting_room.png') is None:
+            logging.info("Maybe no longer in the waiting room..")
+            check_periods += 1
+            if check_periods == 2:
+                logging.info("No longer in the waiting room..")
+                break
+        time.sleep(2)    
+
+def setup_view_and_fullscreen():
+    logging.info("Enter fullscreen..")
+    show_toolbars()
+    try:
+        pos = locate_image_on_screen('view.png')
+        pyautogui.click(*pos)
+    except TypeError:
+        logging.error("Could not find view!")
+        if DEBUG:
+            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                TIME_FORMAT) + "-" + description) + "_view_error.png")
+
+    time.sleep(2)
+
+    fullscreen = False
+    try:
+        pos= locate_image_on_screen('fullscreen.png')
+        pyautogui.click(*pos)
+        fullscreen = True
+    except TypeError:
+        logging.error("Could not find fullscreen!")
+        if DEBUG:
+            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                TIME_FORMAT) + "-" + description) + "_fullscreen_error.png")
+
+    # TODO: Check for 'Exit Full Screen': already fullscreen -> fullscreen = True
+
+    # Screensharing already active
+    if not fullscreen:
+        try:
+            pos = locate_image_on_screen('view_options.png')
+            pyautogui.click(*pos)
+        except TypeError:
+            logging.error("Could not find view options!")
+            if DEBUG:
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT) + "-" + description) + "_view_options_error.png")
+
+        # Switch to fullscreen
+        time.sleep(2)
+        show_toolbars()
+
+        logging.info("Enter fullscreen..")
+        try:
+            pos = locate_image_on_screen('enter_fullscreen.png')
+            pyautogui.click(*pos)
+        except TypeError:
+            logging.error("Could not enter fullscreen by image!")
+            if DEBUG:
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT) + "-" + description) + "_enter_fullscreen_error.png")
+            return
+
+        time.sleep(2)
+
+    # Screensharing not active
+    screensharing_active = False
+    try:
+        pos = locate_image_on_screen('view_options.png')
+        pyautogui.click(*pos)
+        screensharing_active = True
+    except TypeError:
+        logging.error("Could not find view options!")
+        if DEBUG:
+            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                TIME_FORMAT) + "-" + description) + "_view_options_error.png")
+
+    time.sleep(2)
+
+    if screensharing_active:
+        # hide video panel
+        try:
+            pos = locate_image_on_screen('hide_video_panel.png')
+            pyautogui.click(*pos)
+            VIDEO_PANEL_HIDED = True
+        except TypeError:
+            logging.error("Could not hide video panel!")
+            if DEBUG:
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT) + "-" + description) + "_hide_video_panel_error.png")
+    else:
+        # switch to speaker view
+        show_toolbars()
+
+        logging.info("Switch view..")
+        try:
+            pos = locate_image_on_screen('view.png')
+            pyautogui.click(*pos)
+        except TypeError:
+            logging.error("Could not find view!")
+            if DEBUG:
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT) + "-" + description) + "_view_error.png")
+
+        time.sleep(2)
+
+        try:
+            # speaker view
+            pos = locate_image_on_screen('speaker_view.png')
+            pyautogui.click(*pos)
+        except TypeError:
+            logging.error("Could not switch speaker view!")
+            if DEBUG:
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT) + "-" + description) + "_speaker_view_error.png")
+
+        try:
+            # minimize panel
+            pos = locate_image_on_screen('minimize.png')
+            pyautogui.click(*pos)
+        except TypeError:
+            logging.error("Could not minimize panel!")
+            if DEBUG:
+                pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                    TIME_FORMAT) + "-" + description) + "_minimize_error.png")
+
+    # Move mouse from screen
+    pyautogui.moveTo(0, 100)
+    pyautogui.click(0, 100)
+
+def start_recording():
+    if DEBUG and ffmpeg_debug is not None:
+        os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
+        atexit.unregister(os.killpg)
+    logging.info("Start recording..")
+
+    filename = os.path.join(REC_PATH, time.strftime(
+        TIME_FORMAT) + "-" + description) + ".mkv"
+
+    width, height = pyautogui.size()
+    resolution = str(width) + 'x' + str(height)
+    disp = os.getenv('DISPLAY')
+
+    command = "ffmpeg -nostats -loglevel error -f pulse -ac 2 -i 1 -f x11grab -r 30 -s " + resolution + " -i " + \
+              disp + " -acodec pcm_s16le -vcodec libx264rgb -preset ultrafast -crf 0 -threads 0 -async 1 -vsync 1 " + filename
+
+    ffmpeg = subprocess.Popen(
+        command, stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+
+    atexit.register(os.killpg, os.getpgid(
+        ffmpeg.pid), signal.SIGQUIT)
+
+    start_date = datetime.now()
+    end_date = start_date + timedelta(seconds=duration + 300)  # Add 5 minutes
 
 # ---------------- Schedule & CSV reload -----------------
 def join_if_correct_date(meet_id, meet_pw, meet_duration, meet_description, meet_date):
