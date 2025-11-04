@@ -101,8 +101,6 @@ USER zoomrec
 WORKDIR ${HOME}
 RUN mkdir -p /tmp/pulse
 RUN chmod 700 /tmp/pulse
-#Set AlwaysShowVideoPreviewDialog to false in config file
-CMD sed -i '/^AudioAutoAdjust=false$/a AlwaysShowVideoPreviewDialog=false\n' ~/.config/zoomus.conf
 # Allow access to pulseaudio
 RUN groupadd -f pulse-access && groupadd -f pulse
 RUN adduser zoomrec pulse-access || true
@@ -128,5 +126,25 @@ RUN chmod a+x ${START_DIR}/entrypoint.sh && \
     chown -R zoomrec:zoomrec ${HOME} && \
     find ${HOME}/ -name '*.sh' -exec chmod -v a+x {} +
     #find ${HOME}/ -name '*.desktop' -exec chmod -v a+x {} +
+RUN CONFIG=/home/zoomrec/.config/zoomus.conf \
+ && mkdir -p /home/zoomrec/.config \
+ && touch "$CONFIG" \
+ \
+    # If AlwaysShowVideoPreviewDialog=false already exists, do nothing
+ && if ! grep -qx 'AlwaysShowVideoPreviewDialog=false' "$CONFIG"; then \
+ \
+        # If AudioAutoAdjust=false exists, insert after it
+        if grep -qx 'AudioAutoAdjust=false' "$CONFIG"; then \
+            sed -i '/^AudioAutoAdjust=false$/a AlwaysShowVideoPreviewDialog=false' "$CONFIG"; \
+        else \
+            # Ensure [General] exists, else add it
+            grep -qx '\[General\]' "$CONFIG" || echo '[General]' >> "$CONFIG"; \
+            # Append both keys if they don't exist
+            if ! grep -qx 'AudioAutoAdjust=false' "$CONFIG"; then echo 'AudioAutoAdjust=false' >> "$CONFIG"; fi; \
+            echo 'AlwaysShowVideoPreviewDialog=false' >> "$CONFIG"; \
+        fi; \
+    fi \
+ \
+ && chown -R zoomrec:zoomrec /home/zoomrec/.config
 EXPOSE 5901
 CMD ${START_DIR}/entrypoint.sh
