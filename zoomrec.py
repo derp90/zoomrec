@@ -288,11 +288,18 @@ def join(meet_id, meet_pw, duration, description):
         logging.info("Waiting for Zoom to be ready...")
         time.sleep(1)
 
+    time.sleep(15)
+    logging.info("clicking first join")
     pos = locate_image_on_screen('join.png')
     if pos:
+        logging.info("found first join")
         pyautogui.click(*pos)
         time.sleep(5)
 
+    
+    time.sleep(10)
+
+    
     # Enter meeting credentials and join
     if not join_by_url:
         pyautogui.press(['tab','tab'])
@@ -302,10 +309,24 @@ def join(meet_id, meet_pw, duration, description):
         pyautogui.write(DISPLAY_NAME, interval=0.1)
         pyautogui.press(['tab','space','tab','tab','space','tab','tab','space'])
     else:
+        logging.info("Putting in display name")
         pyautogui.hotkey('ctrl','a')
         pyautogui.write(DISPLAY_NAME, interval=0.1)
+        pyautogui.press('enter')
 
-    time.sleep(5)
+    logging.info("looking for join 2")
+    while not locate_image_on_screen('join_2.png'):
+        time.sleep(1)
+
+    time.sleep(15)
+    logging.info("join 2")
+    pos = locate_image_on_screen('join_2.png')
+    if pos:
+        logging.info("found join_2")
+        pyautogui.click(*pos)
+        time.sleep(5)
+
+    time.sleep(15)
     join_audio(description)
 
     # Start background threads
