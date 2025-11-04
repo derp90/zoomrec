@@ -66,6 +66,7 @@ def grab_screenshot():
     return img
 
 def locate_image_on_screen(image_name, threshold=0.9):
+    # TODO switch to grayscale matching for better perfomance
     """Return the center coordinates (x, y) if the template matches the screen"""
     img_path = os.path.join(IMG_PATH, image_name)
     if not os.path.exists(img_path):
