@@ -32,10 +32,8 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/* && \
     apt-get update && apt-get install -y \
     libxcb1 \
-    git \
-    nginx-extras \
-    supervisor \
-    xterm \
+    novnc \
+    websockify \
     libxcb-render0 \
     libxcb-shm0 \
     libxcb-icccm4 \
@@ -98,9 +96,6 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python packages
 RUN pip3 install pyautogui pyscreeze opencv-python pillow schedule
-
-#clone noVNC
-RUN git clone https://github.com/novnc/noVNC.git /var/www/html/novnc
 
 # Create user
 RUN useradd -m zoomrec
