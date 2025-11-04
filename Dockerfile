@@ -8,6 +8,7 @@ ENV HOME=/home/zoomrec \
     VNC_COL_DEPTH=24 \
     VNC_PW=zoomrec \
     VNC_PORT=5901 \
+    NOVNC_PORT=8080 \
     DISPLAY=:1 \
     MYVER=2 \
     DEBUG=FALSE \
