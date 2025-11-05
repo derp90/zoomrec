@@ -40,7 +40,7 @@ openbox &
 # Start x11vnc (no password for now — update later)
 x11vnc -display :1 -forever -o /dev/null -nopw -shared -rfbport $VNC_PORT &
 #/usr/share/novnc/utils/novnc_proxy --vnc localhost:$VNC_PORT --listen $NOVNC_PORT &
-ln -sf /usr/share/novnc/vnc_auto.html /usr/share/novnc/index.html
+ln -sf /usr/share/novnc/vnc.html /usr/share/novnc/index.html
 websockify -D --web=/usr/share/novnc $NOVNC_PORT localhost:$VNC_PORT &
 
 echo "Starting Zoom automation..."
