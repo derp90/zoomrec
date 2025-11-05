@@ -86,7 +86,9 @@ RUN apt-get update && apt-get install -y \
 
 # Install Zoom (latest)
 RUN wget -O zoom.deb https://zoom.us/client/latest/zoom_amd64.deb && \
-    apt-get update && apt-get install -y ./zoom.deb && rm zoom.deb
+    apt-get update && apt-get install -y ./zoom.deb && rm zoom.deb \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 ADD res/requirements.txt ${HOME}/res/requirements.txt
 
