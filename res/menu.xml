@@ -15,11 +15,12 @@
         </action>
     </item>
 
-    <item label="Web Browser (Firefox)">
+    <item label="Web Browser (Chromium)">
         <action name="Execute">
-            <command>firefox</command>
+            <command>chromium-browser</command>
         </action>
     </item>
+
 
     <item label="Zoom">
         <action name="Execute">
