@@ -49,7 +49,6 @@ RUN apt-get update && apt-get install -y \
     libxcb-xfixes0 \
     libxcb-xinerama0 \
     libxcb-xkb1 \
-    libxkbcommon-x11-0 \
     libglu1 \
     libxrender1 \
     libxi6 \
@@ -65,12 +64,10 @@ RUN apt-get update && apt-get install -y \
     libxss1 \
     libasound2 \
     fonts-dejavu-core \
-    pulseaudio \
     pavucontrol \
     ffmpeg \
     libavcodec-extra \
-    gnome-screenshot \
-    chromium-browser \
+    chromium \
     scrot \
     vlc \
     x11vnc \
