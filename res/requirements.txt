@@ -6,3 +6,4 @@ opencv-python>=4.1.2.30
 pillow>=10.2.0
 requests
 security~=1.2.0
+pyscreeze
