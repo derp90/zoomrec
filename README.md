@@ -1,7 +1,8 @@
 <h1 align="center">
     zoomrec	- This is a work in progress, rewriting most of the original to work with some improvements (including some from other forks)
 </h1>
-<h1 align="center" style="color: red;>
+
+<h1 align="center">
     This does not work currently
 </h1>
 
