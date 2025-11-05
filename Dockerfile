@@ -65,15 +65,24 @@ RUN apt-get update && apt-get install -y \
     libxss1 \
     libasound2 \
     fonts-dejavu-core \
+    pulseaudio \
+    pavucontrol \
+    ffmpeg \
+    libavcodec-extra \
+    gnome-screenshot \
+    chromium-browser \
+    scrot \
+    x11vnc \
+    openbox \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 
 # Install pulseaudio
-RUN apt-get update && apt-get install -y \
-    pulseaudio \
-    pavucontrol && \
-    rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && apt-get install -y \
+#    pulseaudio \
+#    pavucontrol && \
+#    rm -rf /var/lib/apt/lists/*
 
 # Install Zoom (latest)
 RUN wget -O zoom.deb https://zoom.us/client/latest/zoom_amd64.deb && \
@@ -82,25 +91,25 @@ RUN wget -O zoom.deb https://zoom.us/client/latest/zoom_amd64.deb && \
 ADD res/requirements.txt ${HOME}/res/requirements.txt
 
 # Install FFmpeg
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    ffmpeg \
-    libavcodec-extra \
-    gnome-screenshot \
-    chromium-browser \
-    scrot && \
-    pip3 install --upgrade --no-cache-dir -r ${HOME}/res/requirements.txt && \
+#RUN apt-get update && apt-get install --no-install-recommends -y \
+#    ffmpeg \
+#    libavcodec-extra \
+#    gnome-screenshot \
+#    chromium-browser \
+#    scrot && \
+RUN pip3 install --upgrade --no-cache-dir -r ${HOME}/res/requirements.txt
     # Install VLC - optional
-    apt-get install --no-install-recommends -y vlc
+    #apt-get install --no-install-recommends -y vlc
 
 # Install VNC components
-RUN apt-get update && apt-get install -y \
-    x11vnc \
-    openbox \
-    && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update && apt-get install -y \
+#    x11vnc \
+#    openbox \
+#    && rm -rf /var/lib/apt/lists/*
 
 
 # Install Python packages
-RUN pip3 install pyautogui pyscreeze opencv-python pillow schedule
+#pip3 install pyautogui pyscreeze opencv-python pillow schedule
 
 # Create user
 RUN useradd -m zoomrec
