@@ -100,6 +100,11 @@ RUN pip3 install pyautogui pyscreeze opencv-python pillow schedule
 
 # Create user
 RUN useradd -m zoomrec
+# openbox menu
+RUN mkdir -p /home/zoomrec/.config/openbox
+COPY res/menu.xml /home/zoomrec/.config/openbox/menu.xml
+RUN chown -R zoomrec:zoomrec /home/zoomrec/.config
+
 USER zoomrec
 WORKDIR ${HOME}
 RUN mkdir -p /tmp/pulse
@@ -108,10 +113,6 @@ RUN chmod 700 /tmp/pulse
 RUN groupadd -f pulse-access && groupadd -f pulse
 RUN adduser zoomrec pulse-access || true
 
-# openbox menu
-RUN mkdir -p /home/zoomrec/.config/openbox
-COPY res/menu.xml /home/zoomrec/.config/openbox/menu.xml
-RUN chown -R zoomrec:zoomrec /home/zoomrec/.config
 
 USER zoomrec
 # Add home resources
