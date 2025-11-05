@@ -465,6 +465,7 @@ def check_inital_join_states():
                     TIME_FORMAT) + "-" + description) + "_find_poll_results_error.png")
 
 def wait_for_host():
+    in_waitingroom = False
     if locate_image_on_screen('waiting_room.png') is not None:
         in_waitingroom = True
         logging.info("Please wait, the meeting host will let you in soon..")
