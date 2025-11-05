@@ -372,7 +372,7 @@ def join(meet_id, meet_pw, duration, description):
     
     wait_for_host()
 
-    check_connecting(zoom.pid, start_date, duration)
+    check_connecting(zoom_proc.pid, start_date, duration)
     logging.info("Joined meeting..")
     check_inital_join_states() #check if there are polls, recording, etc and clear the dialogs
     
@@ -381,7 +381,7 @@ def join(meet_id, meet_pw, duration, description):
 
     if not join_audio(description):
         logging.info("Exit!")
-        os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
+        os.killpg(os.getpgid(zoom_proc.pid), signal.SIGQUIT)
         if DEBUG:
             os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
             atexit.unregister(os.killpg)
@@ -416,7 +416,7 @@ def join(meet_id, meet_pw, duration, description):
         os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
         atexit.unregister(os.killpg)
 
-    os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
+    os.killpg(os.getpgid(zoom_proc.pid), signal.SIGQUIT)
     os.killpg(os.getpgid(ffmpeg.pid), signal.SIGQUIT)
     atexit.unregister(os.killpg)
 
@@ -476,7 +476,7 @@ def wait_for_host():
         if (datetime.now() - start_date).total_seconds() > duration:
             logging.info("Meeting ended after time!")
             logging.info("Exit Zoom!")
-            os.killpg(os.getpgid(zoom.pid), signal.SIGQUIT)
+            os.killpg(os.getpgid(zoom_proc.pid), signal.SIGQUIT)
             if DEBUG:
                 os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
                 atexit.unregister(os.killpg)
