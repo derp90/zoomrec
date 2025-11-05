@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y \
     xvfb x11-apps x11-utils \
     dbus-x11 \
     xauth \
+    xfce4-terminal \
     libxkbcommon-x11-0 \
     x11-xserver-utils \
     alsa-utils pulseaudio \
