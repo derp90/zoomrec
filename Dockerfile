@@ -72,6 +72,7 @@ RUN apt-get update && apt-get install -y \
     gnome-screenshot \
     chromium-browser \
     scrot \
+    vlc \
     x11vnc \
     openbox \
     && apt-get clean \
