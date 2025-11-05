@@ -83,7 +83,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     ffmpeg \
     libavcodec-extra \
     gnome-screenshot \
-    firefox \
+    chromium-browser \
     scrot && \
     pip3 install --upgrade --no-cache-dir -r ${HOME}/res/requirements.txt && \
     # Install VLC - optional
