@@ -301,7 +301,7 @@ class HideViewOptionsThread(threading.Thread):
 # ---------------- Join Meeting -----------------
 def join(meet_id, meet_pw, duration, description):
     global VIDEO_PANEL_HIDED
-    ffmpeg_debug_record()
+    ffmpeg_debug_record(meet_id, meet_pw, duration, description)
     logging.info(f"Joining meeting: {description}")
 
     # Guard: avoid double-join for same meeting id
@@ -465,7 +465,7 @@ def check_inital_join_states():
                 pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
                     TIME_FORMAT) + "-" + description) + "_find_poll_results_error.png")
 
-def ffmpeg_debug_record():
+def ffmpeg_debug_record(meet_id, meet_pw, duration, description):
     ffmpeg_debug = None
 
     logging.info("Join meeting: " + description)
