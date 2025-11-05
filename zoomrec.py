@@ -301,6 +301,7 @@ class HideViewOptionsThread(threading.Thread):
 # ---------------- Join Meeting -----------------
 def join(meet_id, meet_pw, duration, description):
     global VIDEO_PANEL_HIDED
+    ffmpeg_debug_record()
     logging.info(f"Joining meeting: {description}")
 
     # Guard: avoid double-join for same meeting id
@@ -463,6 +464,30 @@ def check_inital_join_states():
             if DEBUG:
                 pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
                     TIME_FORMAT) + "-" + description) + "_find_poll_results_error.png")
+
+def ffmpeg_debug_record():
+    ffmpeg_debug = None
+
+    logging.info("Join meeting: " + description)
+
+    if DEBUG:
+        # Start recording
+        width, height = pyautogui.size()
+        resolution = str(width) + 'x' + str(height)
+        disp = os.getenv('DISPLAY')
+
+        logging.info("Start recording..")
+
+        filename = os.path.join(
+            REC_PATH, time.strftime(TIME_FORMAT)) + "-" + description + "-JOIN.mkv"
+
+        command = "ffmpeg -nostats -loglevel quiet -f pulse -ac 2 -i 1 -f x11grab -r 30 -s " + resolution + " -i " + \
+                  disp + " -acodec pcm_s16le -vcodec libx264rgb -preset ultrafast -crf 0 -threads 0 -async 1 -vsync 1 " + filename
+
+        ffmpeg_debug = subprocess.Popen(
+            command, stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
+        atexit.register(os.killpg, os.getpgid(
+            ffmpeg_debug.pid), signal.SIGQUIT)
 
 def wait_for_host():
     in_waitingroom = False
