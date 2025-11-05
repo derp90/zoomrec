@@ -16,7 +16,9 @@ ENV HOME=/home/zoomrec \
     DEBIAN_FRONTEND=noninteractive \
     QT_QPA_PLATFORM=xcb \
     QT_PLUGIN_PATH=/opt/zoom/plugins \
-    LD_LIBRARY_PATH=/opt/zoom
+    LD_LIBRARY_PATH=/opt/zoom \
+    VLC_ALLOW_RUN_AS_ROOT=1
+
 
 RUN apt-get update && apt-get install -y \
     wget unzip curl gnupg \
