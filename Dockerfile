@@ -21,7 +21,11 @@ ENV HOME=/home/zoomrec \
     VLC_ALLOW_RUN_AS_ROOT=1
 
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
     wget unzip curl gnupg \
     python3 python3-pip python3-opencv \
     python3-tk python3-dev python3-setuptools \
