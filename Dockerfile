@@ -17,6 +17,7 @@ ENV HOME=/home/zoomrec \
     QT_QPA_PLATFORM=xcb \
     QT_PLUGIN_PATH=/opt/zoom/plugins \
     LD_LIBRARY_PATH=/opt/zoom \
+    FFMPEG_DEBUG=FALSE \
     VLC_ALLOW_RUN_AS_ROOT=1
 
 
