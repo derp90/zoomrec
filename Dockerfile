@@ -54,7 +54,7 @@ RUN apt-get update && \
     libxcb-xfixes0 \
     libxcb-xinerama0 \
     libxcb-xkb1 \
-    libglu1 \
+    libglu1-mesa \
     libxrender1 \
     libxi6 \
     libsm6 \
@@ -72,7 +72,6 @@ RUN apt-get update && \
     pavucontrol \
     ffmpeg \
     libavcodec-extra \
-    epiphany-browser \
     scrot \
     vlc \
     x11vnc \
