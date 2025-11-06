@@ -49,6 +49,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-0 libnss3 libxcomposite1 libxdamage1 libxrandr2 \
     libxtst6 libatk1.0-0 libxss1 libasound2 fonts-dejavu-core \
     novnc websockify openbox xfce4-terminal \
+    firefox-esr \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 5️⃣ Multimedia tools
