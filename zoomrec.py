@@ -20,6 +20,7 @@ from functools import partial
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
 DEBUG = True if os.getenv('DEBUG') == 'True' else False
+ffmpeg_debug = True if os.getenv('FFMPEG_DEBUG') == 'True' else False
 pyautogui.FAILSAFE = False
 
 # ---------------- Paths & Variables -----------------
