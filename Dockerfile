@@ -72,7 +72,7 @@ RUN apt-get update && \
     pavucontrol \
     ffmpeg \
     libavcodec-extra \
-    firefox-esr \
+    epiphany-browser \
     scrot \
     vlc \
     x11vnc \
