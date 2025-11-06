@@ -19,10 +19,6 @@ from functools import partial
 # ---------------- Logging -----------------
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
-DEBUG = True if os.getenv('DEBUG') == 'True' else False
-ffmpeg_debug = ffmpeg_debug = None if os.getenv('FFMPEG_DEBUG') == 'False'
-pyautogui.FAILSAFE = False
-
 # ---------------- Paths & Variables -----------------
 BASE_PATH = os.getenv('HOME')
 CSV_PATH = os.path.join(BASE_PATH, "meetings.csv")
@@ -35,6 +31,9 @@ os.environ.pop("QT_QPA_PLATFORM_PLUGIN_PATH", None)
 os.environ["QT_QPA_PLATFORM"] = "xcb"
 os.environ["QT_PLUGIN_PATH"] = "/opt/zoom/plugins"
 os.environ["LD_LIBRARY_PATH"] = "/opt/zoom"
+DEBUG = True if os.getenv('DEBUG') == 'True' else False
+ffmpeg_debug = None if os.getenv('FFMPEG_DEBUG') == 'False'
+pyautogui.FAILSAFE = False
 
 # Scheduler state
 scheduled_meetings = set()   # keys of scheduled meetings: "id|iso_datetime"
@@ -128,7 +127,7 @@ def send_telegram_message(text):
             logging.error("Telegram message failed multiple times. Check credentials.")
             done = True
 
-def check_connecting(zoom_pid, start_date, duration):
+def check_connecting(zoom_proc, start_date, duration):
     # Check if connecting
     check_periods = 0
     connecting = False
@@ -143,10 +142,10 @@ def check_connecting(zoom_pid, start_date, duration):
         if (datetime.now() - start_date).total_seconds() > duration:
             logging.info("Meeting ended after time!")
             logging.info("Exit Zoom!")
-            os.killpg(os.getpgid(zoom_pid), signal.SIGQUIT)
+            os.killpg(os.getpgid(zoom_proc), signal.SIGQUIT)
             return
 
-        if locate_image_on_screen('connecting.png') is false:
+        if locate_image_on_screen('connecting.png') is False:
             logging.info("Maybe not connecting anymore..")
             check_periods += 1
             if check_periods >= 2:
@@ -372,7 +371,7 @@ def join(meet_id, meet_pw, duration, description):
     check_error()
     time.sleep(3)
     
-    wait_for_host()
+    wait_for_host(zoom_proc, start_date, duration)
 
     check_connecting(zoom_proc.pid, start_date, duration)
     logging.info("Joined meeting..")
@@ -394,7 +393,7 @@ def join(meet_id, meet_pw, duration, description):
     #    play_audio(description)
         
     
-    setup_view_and_fullscreen()
+    setup_view_and_fullscreen(description)
 
     start_recording()
     
@@ -490,7 +489,7 @@ def ffmpeg_debug_record(meet_id, meet_pw, duration, description):
         atexit.register(os.killpg, os.getpgid(
             ffmpeg_debug.pid), signal.SIGQUIT)
 
-def wait_for_host():
+def wait_for_host(zoom_proc, start_date, duration):
     in_waitingroom = False
     if locate_image_on_screen('waiting_room.png') is not None:
         in_waitingroom = True
@@ -516,7 +515,7 @@ def wait_for_host():
                 break
         time.sleep(2)    
 
-def setup_view_and_fullscreen():
+def setup_view_and_fullscreen(description):
     logging.info("Enter fullscreen..")
     show_toolbars()
     try:
@@ -636,7 +635,7 @@ def setup_view_and_fullscreen():
     pyautogui.moveTo(0, 100)
     pyautogui.click(0, 100)
 
-def start_recording():
+def start_recording(description):
     if DEBUG and ffmpeg_debug is not None:
         os.killpg(os.getpgid(ffmpeg_debug.pid), signal.SIGQUIT)
         atexit.unregister(os.killpg)
@@ -658,6 +657,7 @@ def start_recording():
     atexit.register(os.killpg, os.getpgid(
         ffmpeg.pid), signal.SIGQUIT)
 
+    
     start_date = datetime.now()
     end_date = start_date + timedelta(seconds=duration + 300)  # Add 5 minutes
 
