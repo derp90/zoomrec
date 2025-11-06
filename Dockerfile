@@ -21,42 +21,64 @@ ENV HOME=/home/zoomrec \
     VLC_ALLOW_RUN_AS_ROOT=1
 
 
-# 1️⃣ Base utilities
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository universe && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
     wget unzip curl gnupg \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# 2️⃣ Python and development tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-opencv \
     python3-tk python3-dev python3-setuptools \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# 3️⃣ X11 and GUI dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    xvfb x11-apps x11-utils dbus-x11 xauth \
-    thunar gvfs gvfs-backends xfce4-terminal \
-    libxkbcommon-x11-0 x11-xserver-utils alsa-utils pulseaudio \
-    libgl1-mesa-glx libglib2.0-0 xdotool \
-    libxcb1 libxcb-render0 libxcb-shm0 libxcb-icccm4 \
-    libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
-    libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 libxcb-xkb1 \
-    libglu1-mesa libxrender1 libxi6 libsm6 libice6 \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# 4️⃣ Desktop environment and browser
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgtk-3-0 libnss3 libxcomposite1 libxdamage1 libxrandr2 \
-    libxtst6 libatk1.0-0 libxss1 libasound2 fonts-dejavu-core \
-    novnc websockify openbox xfce4-terminal \
+    xvfb x11-apps x11-utils \
+    dbus-x11 \
+    xauth \
+    thunar gvfs gvfs-backends \
+    xfce4-terminal \
+    libxkbcommon-x11-0 \
+    x11-xserver-utils \
+    alsa-utils pulseaudio \
+    libgl1-mesa-glx libglib2.0-0 \
+    xdotool \
+    libxcb1 \
+    novnc \
+    websockify \
+    libxcb-render0 \
+    libxcb-shm0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-shape0 \
+    libxcb-sync1 \
+    libxcb-xfixes0 \
+    libxcb-xinerama0 \
+    libxcb-xkb1 \
+    libglu1 \
+    libxrender1 \
+    libxi6 \
+    libsm6 \
+    libice6 \
+    libgtk-3-0 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libxtst6 \
+    libatk1.0-0 \
+    libxss1 \
+    libasound2 \
+    fonts-dejavu-core \
+    pavucontrol \
+    ffmpeg \
+    libavcodec-extra \
     firefox-esr \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# 5️⃣ Multimedia tools
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    pavucontrol ffmpeg libavcodec-extra scrot vlc x11vnc \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
+    scrot \
+    vlc \
+    x11vnc \
+    openbox \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 
 # Install pulseaudio
