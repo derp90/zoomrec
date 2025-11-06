@@ -68,7 +68,7 @@ RUN apt-get update && apt-get install -y \
     pavucontrol \
     ffmpeg \
     libavcodec-extra \
-    chromium \
+    firefox-esr \
     scrot \
     vlc \
     x11vnc \
