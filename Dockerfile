@@ -42,6 +42,7 @@ RUN apt-get update && \
     libxcb1 \
     novnc \
     websockify \
+    gnome-screenshot \
     libxcb-render0 \
     libxcb-shm0 \
     libxcb-icccm4 \
