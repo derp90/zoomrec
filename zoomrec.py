@@ -395,7 +395,7 @@ def join(meet_id, meet_pw, duration, description):
     
     setup_view_and_fullscreen(description)
 
-    start_recording()
+    ffmpeg = start_recording(description)
     
     HideViewOptionsThread()
 
@@ -653,7 +653,7 @@ def start_recording(description):
 
     ffmpeg = subprocess.Popen(
         command, stdout=subprocess.PIPE, shell=True, preexec_fn=os.setsid)
-
+    return ffmpeg
     atexit.register(os.killpg, os.getpgid(
         ffmpeg.pid), signal.SIGQUIT)
 
