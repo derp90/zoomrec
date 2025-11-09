@@ -222,12 +222,18 @@ def show_toolbars():
 
 # ---------------- Audio & Mute -----------------
 def join_audio(description):
-    pos = locate_image_on_screen('join_with_computer_audio.png')
-    if pos:
-        pyautogui.click(*pos)
-        logging.info("Joined with computer audio.")
-        return True
-    else:
+    trys = 0
+    status = False
+    while trys < 10:
+        pos = locate_image_on_screen('join_with_computer_audio.png')
+        if pos:
+            pyautogui.click(*pos)
+            logging.info("Joined with computer audio.")
+            status = True
+            return status
+        time.sleep(1)
+    
+    if status = False:
         logging.error("Could not join with computer audio!")
         return False
 
