@@ -233,7 +233,7 @@ def join_audio(description):
             return status
         time.sleep(1)
     
-    if status = False:
+    if status == False:
         logging.error("Could not join with computer audio!")
         return False
 
