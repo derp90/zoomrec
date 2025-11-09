@@ -32,7 +32,7 @@ os.environ["QT_QPA_PLATFORM"] = "xcb"
 os.environ["QT_PLUGIN_PATH"] = "/opt/zoom/plugins"
 os.environ["LD_LIBRARY_PATH"] = "/opt/zoom"
 DEBUG = True if os.getenv('DEBUG') == 'True' else False
-ffmpeg_debug = None if os.getenv('FFMPEG_DEBUG') == 'False'
+ffmpeg_debug = None if os.getenv('FFMPEG_DEBUG') == 'False' else None
 pyautogui.FAILSAFE = False
 
 # Scheduler state
