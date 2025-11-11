@@ -375,7 +375,7 @@ def join(meet_id, meet_pw, duration, description):
     # TODO
     # TODO
     check_error()
-    time.sleep(3)
+    time.sleep(10)
     
     wait_for_host(zoom_proc, start_date, duration)
 
