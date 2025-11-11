@@ -357,6 +357,7 @@ def join(meet_id, meet_pw, duration, description):
     
     # Enter meeting credentials and join
     if not join_by_url:
+        logging.info("Putting in display name - Not URL")
         pyautogui.press(['tab','tab'])
         pyautogui.write(meet_id, interval=0.1)
         pyautogui.press(['tab','tab'])
@@ -367,7 +368,7 @@ def join(meet_id, meet_pw, duration, description):
         #this enter might not be needed with the tab spaces
         pyautogui.press('enter')
     else:
-        logging.info("Putting in display name")
+        logging.info("Putting in display name - URL")
         pyautogui.hotkey('ctrl','a')
         pyautogui.write(DISPLAY_NAME, interval=0.05)
         pyautogui.press('enter')
