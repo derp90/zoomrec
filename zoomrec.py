@@ -356,6 +356,7 @@ def join(meet_id, meet_pw, duration, description):
     time.sleep(3)
     
     # Enter meeting credentials and join
+    logging.info("before name")
     if not join_by_url:
         logging.info("Putting in display name - Not URL")
         pyautogui.press(['tab','tab'])
@@ -376,16 +377,22 @@ def join(meet_id, meet_pw, duration, description):
     #check for errors, this returns true for no errors, need to do something if false, build it into check_error later
     # TODO
     # TODO
+    logging.info("before error")
     check_error()
     time.sleep(10)
-    
+
+    logging.info("before host")
     wait_for_host(zoom_proc, start_date, duration)
 
+    logging.info("before check connecting")
     check_connecting(zoom_proc.pid, start_date, duration)
     logging.info("Joined meeting..")
+    
+    logging.info("before initial check")
     check_inital_join_states() #check if there are polls, recording, etc and clear the dialogs
     
     # Start background threads
+    logging.info("before background")
     BackgroundThread()
 
     if not join_audio(description):
