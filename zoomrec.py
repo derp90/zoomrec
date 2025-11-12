@@ -538,7 +538,9 @@ def wait_for_host(zoom_proc, start_date, duration):
     if locate_image_on_screen('waiting_room.png') is not None:
         in_waitingroom = True
         logging.info("Please wait, the meeting host will let you in soon..")
-
+    if locate_image_on_screen('waiting_room_2.png') is not None:
+        in_waitingroom = True
+        logging.info("Please wait, the meeting host will let you in soon..")
     # Wait while host will let you in
     # Exit when meeting ends after time
     while in_waitingroom:
@@ -551,7 +553,7 @@ def wait_for_host(zoom_proc, start_date, duration):
                 atexit.unregister(os.killpg)
             return
 
-        if locate_image_on_screen('waiting_room.png') is None:
+        if locate_image_on_screen('waiting_room.png') is None and locate_image_on_screen('waiting_room_2.png') is None:
             logging.info("Maybe no longer in the waiting room..")
             check_periods += 1
             if check_periods == 2:
