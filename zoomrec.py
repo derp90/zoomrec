@@ -379,7 +379,7 @@ def join(meet_id, meet_pw, duration, description):
     # TODO
     logging.info("before error")
     check_error()
-    time.sleep(10)
+    time.sleep(20)
 
     logging.info("before host")
     wait_for_host(zoom_proc, start_date, duration)
