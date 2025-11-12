@@ -102,7 +102,7 @@ ADD res/requirements.txt ${HOME}/res/requirements.txt
 #    gnome-screenshot \
 #    chromium-browser \
 #    scrot && \
-RUN pip3 install --upgrade --no-cache-dir -r ${HOME}/res/requirements.txt && pip3 install --upgrade --no-cache-dir keyboard
+RUN pip3 install --upgrade --no-cache-dir -r ${HOME}/res/requirements.txt && pip3 install --upgrade --no-cache-dir pynput
     # Install VLC - optional
     #apt-get install --no-install-recommends -y vlc
 
