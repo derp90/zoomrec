@@ -353,7 +353,7 @@ def join(meet_id, meet_pw, duration, description):
     logging.info("Zoom started!")
     start_date = datetime.now()
 
-    time.sleep(3)
+    time.sleep(30)
     
     # Enter meeting credentials and join
     logging.info("before name")
