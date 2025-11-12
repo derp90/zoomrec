@@ -15,7 +15,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import secrets
 from functools import partial
-import keyboard
+from pynput import keyboard
 
 # ---------------- Logging -----------------
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
@@ -120,8 +120,17 @@ def save_screenshot_on_hotkey():
         except Exception as e:
             logging.error(f"Failed to save screenshot: {e}")
 
-    # Bind F12 key to trigger screenshot
-    keyboard.add_hotkey('f12', take_and_save)
+    def on_press(key):
+        try:
+            if key == keyboard.Key.f12:
+                take_and_save()
+        except Exception as e:
+            logging.error(f"Hotkey error: {e}")
+
+    listener = keyboard.Listener(on_press=on_press)
+    listener.daemon = True
+    listener.start()
+
     logging.info("🔑 Press F12 anytime to take a screenshot.")
 
 def send_telegram_message(text):
