@@ -535,6 +535,7 @@ def ffmpeg_debug_record(meet_id, meet_pw, duration, description):
 
 def wait_for_host(zoom_proc, start_date, duration):
     in_waitingroom = False
+    check_periods = 0
     if locate_image_on_screen('waiting_room.png') is not None:
         in_waitingroom = True
         logging.info("Please wait, the meeting host will let you in soon..")
@@ -556,7 +557,7 @@ def wait_for_host(zoom_proc, start_date, duration):
         if locate_image_on_screen('waiting_room.png') is None and locate_image_on_screen('waiting_room_2.png') is None:
             logging.info("Maybe no longer in the waiting room..")
             check_periods += 1
-            if check_periods == 2:
+            if check_periods >= 3:
                 logging.info("No longer in the waiting room..")
                 break
         time.sleep(2)    
