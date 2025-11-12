@@ -43,6 +43,7 @@ RUN apt-get update && \
     novnc \
     websockify \
     gnome-screenshot \
+    python3-xlib python3-evdev \
     libxcb-render0 \
     libxcb-shm0 \
     libxcb-icccm4 \
