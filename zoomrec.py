@@ -15,6 +15,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import secrets
 from functools import partial
+import keyboard
 
 # ---------------- Logging -----------------
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
@@ -104,6 +105,25 @@ def image_exists(image_name, threshold=0.9):
     return locate_image_on_screen(image_name, threshold) is not None
 
 # ---------------- Helper Functions -----------------
+def save_screenshot_on_hotkey():
+    """Bind F12 to take and save a screenshot to DEBUG_PATH."""
+    if not os.path.exists(DEBUG_PATH):
+        os.makedirs(DEBUG_PATH, exist_ok=True)
+
+    def take_and_save():
+        timestamp = datetime.now().strftime(TIME_FORMAT)
+        filename = os.path.join(DEBUG_PATH, f"screenshot_{timestamp}.png")
+        try:
+            screenshot = pyautogui.screenshot()
+            screenshot.save(filename)
+            logging.info(f"📸 Screenshot saved: {filename}")
+        except Exception as e:
+            logging.error(f"Failed to save screenshot: {e}")
+
+    # Bind F12 key to trigger screenshot
+    keyboard.add_hotkey('f12', take_and_save)
+    logging.info("🔑 Press F12 anytime to take a screenshot.")
+
 def send_telegram_message(text):
     global TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, TELEGRAM_RETRIES
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
@@ -780,6 +800,7 @@ def main():
         logging.error("Failed to create screenshot folder!")
         raise
     logging.info("✅ Zoom Recorder Started")
+    save_screenshot_on_hotkey()
     refresh_schedule()  # initial load
 
 if __name__ == '__main__':
