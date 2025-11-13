@@ -588,6 +588,48 @@ def setup_view_and_fullscreen(description):
             pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
                 TIME_FORMAT) + "-" + description) + "_fullscreen_error.png")
 
+
+     try:
+        pos = locate_image_on_screen('view.png')
+        pyautogui.click(*pos)
+    except TypeError:
+        logging.error("Could not find view!")
+        if DEBUG:
+            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                TIME_FORMAT) + "-" + description) + "_view_error.png")
+
+    time.sleep(2)
+
+    try:
+        pos= locate_image_on_screen('hide_self_view.png')
+        pyautogui.click(*pos)
+        fullscreen = True
+    except TypeError:
+        logging.error("Could not find Hide Self View")
+        if DEBUG:
+            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                TIME_FORMAT) + "-" + description) + "_self_view_error.png")
+     try:
+        pos = locate_image_on_screen('view.png')
+        pyautogui.click(*pos)
+    except TypeError:
+        logging.error("Could not find view!")
+        if DEBUG:
+            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                TIME_FORMAT) + "-" + description) + "_view_error.png")
+
+    time.sleep(2)
+
+    try:
+        pos= locate_image_on_screen('hide_non_video.png')
+        pyautogui.click(*pos)
+        fullscreen = True
+    except TypeError:
+        logging.error("Could not find Hide non-video")
+        if DEBUG:
+            pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
+                TIME_FORMAT) + "-" + description) + "_self_view_error.png")
+            
     # TODO: Check for 'Exit Full Screen': already fullscreen -> fullscreen = True
 
     # Screensharing already active
