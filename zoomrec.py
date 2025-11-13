@@ -418,12 +418,12 @@ def join(meet_id, meet_pw, duration, description):
     logging.info("Joined meeting..")
     
     logging.info("before initial check")
-    check_inital_join_states() #check if there are polls, recording, etc and clear the dialogs
+    check_inital_join_states(description) #check if there are polls, recording, etc and clear the dialogs
     
     # Start background threads
     logging.info("before background")
     BackgroundThread()
-
+    time.sleep(10) #debug so I can grab screenshots
     if not join_audio(description):
         logging.info("Exit!")
         os.killpg(os.getpgid(zoom_proc.pid), signal.SIGQUIT)
@@ -436,16 +436,17 @@ def join(meet_id, meet_pw, duration, description):
     #if os.path.exists(AUDIO_PATH):
     #    play_audio(description)
         
-    
+    time.sleep(10) #debug so I can grab screenshots
     setup_view_and_fullscreen(description)
-
+    time.sleep(10) #debug so I can grab screenshots
     ffmpeg = start_recording(description)
-    
+    time.sleep(10) #debug so I can grab screenshots
     HideViewOptionsThread()
 
     # Optional Telegram notification
-    send_telegram_message(f"Meeting joined: {description}")
+    #send_telegram_message(f"Meeting joined: {description}")
     meeting_running = True
+    end_date = start_date + timedelta(seconds=duration + 600)  # Add 5 minutes
     while meeting_running:
         time_remaining = end_date - datetime.now()
         if time_remaining.total_seconds() < 0 or not ONGOING_MEETING:
@@ -475,9 +476,9 @@ def join(meet_id, meet_pw, duration, description):
                 pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
                     TIME_FORMAT) + "-" + description) + "_ok_error.png")
                 
-    send_telegram_message("Meeting '{}' ended.".format(description))
+    #send_telegram_message("Meeting '{}' ended.".format(description))
 
-def check_inital_join_states():
+def check_inital_join_states(description):
      # Check if recording warning is shown at the beginning
     if (locate_image_on_screen('meeting_is_being_recorded.png') is not None):
         logging.info("This meeting is being recorded..")
