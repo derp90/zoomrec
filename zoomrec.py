@@ -588,8 +588,7 @@ def setup_view_and_fullscreen(description):
             pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
                 TIME_FORMAT) + "-" + description) + "_fullscreen_error.png")
 
-
-     try:
+    try:
         pos = locate_image_on_screen('view.png')
         pyautogui.click(*pos)
     except TypeError:
