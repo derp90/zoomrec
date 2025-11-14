@@ -88,8 +88,8 @@ RUN apt-get update && \
 #    pavucontrol && \
 #    rm -rf /var/lib/apt/lists/*
 
-# Install Zoom (latest)
-RUN wget -O zoom.deb https://zoom.us/client/latest/zoom_amd64.deb && \
+# Install Zoom (6.6.6.5306)
+RUN wget -O zoom.deb https://zoom.us/client/6.6.6.5306/zoom_amd64.deb && \
     apt-get update && apt-get install -y ./zoom.deb && rm zoom.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
