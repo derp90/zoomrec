@@ -311,7 +311,9 @@ class BackgroundThread(threading.Thread):
                 logging.info("Meeting is being recorded.")
                 pos = locate_image_on_screen('got_it.png')
                 if pos: pyautogui.click(*pos)
-            if image_exists('meeting_ended_by_host_1.png') or image_exists('meeting_ended_by_host_2.png'):
+            #if image_exists('meeting_ended_by_host_1.png') or image_exists('meeting_ended_by_host_2.png'): #No longer used by zoom
+            # Check if the meeting was ended by the host OR if zoom no longer has a meeting going
+            if image_exists('meeting_ended_by_host_3.png') or image_exists('zoom_no_meeting.png'):
                 logging.info("Meeting ended by host.")
                 ONGOING_MEETING = False
             time.sleep(self.interval)
@@ -438,10 +440,10 @@ def join(meet_id, meet_pw, duration, description):
         
     time.sleep(10) #debug so I can grab screenshots
     setup_view_and_fullscreen(description)
-    time.sleep(10) #debug so I can grab screenshots
     ffmpeg = start_recording(description)
     time.sleep(10) #debug so I can grab screenshots
-    HideViewOptionsThread()
+    # No Longer used?
+    # HideViewOptionsThread()
 
     # Optional Telegram notification
     #send_telegram_message(f"Meeting joined: {description}")
@@ -720,6 +722,9 @@ def setup_view_and_fullscreen(description):
                 pyautogui.screenshot(os.path.join(DEBUG_PATH, time.strftime(
                     TIME_FORMAT) + "-" + description) + "_minimize_error.png")
 
+    #hide menus
+    pyautogui.press('altleft')
+    
     # Move mouse from screen
     pyautogui.moveTo(0, 100)
     pyautogui.click(0, 100)
