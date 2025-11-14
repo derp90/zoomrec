@@ -158,22 +158,20 @@ RUN CONFIG=/home/zoomrec/.config/zoomus.conf \
  && mkdir -p /home/zoomrec/.config \
  && touch "$CONFIG" \
  \
-    # If AlwaysShowVideoPreviewDialog=false already exists, do nothing
- && if ! grep -qx 'AlwaysShowVideoPreviewDialog=false' "$CONFIG"; then \
+    # Ensure [General] section exists
+ && grep -qx '\[General\]' "$CONFIG" || echo '[General]' >> "$CONFIG" \
  \
-        # If AudioAutoAdjust=false exists, insert after it
-        if grep -qx 'AudioAutoAdjust=false' "$CONFIG"; then \
-            sed -i '/^AudioAutoAdjust=false$/a AlwaysShowVideoPreviewDialog=false' "$CONFIG"; \
-        else \
-            # Ensure [General] exists, else add it
-            grep -qx '\[General\]' "$CONFIG" || echo '[General]' >> "$CONFIG"; \
-            # Append both keys if they don't exist
-            if ! grep -qx 'AudioAutoAdjust=false' "$CONFIG"; then echo 'AudioAutoAdjust=false' >> "$CONFIG"; fi; \
-            echo 'AlwaysShowVideoPreviewDialog=false' >> "$CONFIG"; \
-        fi; \
-    fi \
+    # Ensure AudioAutoAdjust=false
+ && grep -qx 'AudioAutoAdjust=false' "$CONFIG" || echo 'AudioAutoAdjust=false' >> "$CONFIG" \
+ \
+    # Ensure AlwaysShowVideoPreviewDialog=false
+ && grep -qx 'AlwaysShowVideoPreviewDialog=false' "$CONFIG" || echo 'AlwaysShowVideoPreviewDialog=false' >> "$CONFIG" \
+ \
+    # Ensure alwaysShowToolbar=false
+ && grep -qx 'alwaysShowToolbar=false' "$CONFIG" || echo 'alwaysShowToolbar=false' >> "$CONFIG" \
  \
  && chown -R zoomrec:zoomrec /home/zoomrec/.config
+
 EXPOSE 5901
 EXPOSE 8080
 CMD ${START_DIR}/entrypoint.sh
