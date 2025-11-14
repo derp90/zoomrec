@@ -384,7 +384,7 @@ def join(meet_id, meet_pw, duration, description):
     logging.info("Zoom started!")
     start_date = datetime.now()
 
-    time.sleep(30)
+    time.sleep(5)
     
     # Enter meeting credentials and join
     logging.info("before name")
@@ -410,16 +410,14 @@ def join(meet_id, meet_pw, duration, description):
     # TODO
     logging.info("before error")
     check_error()
-    time.sleep(20)
+    time.sleep(1)
 
-    logging.info("before host")
     wait_for_host(zoom_proc, start_date, duration)
 
-    logging.info("before check connecting")
     check_connecting(zoom_proc.pid, start_date, duration)
     logging.info("Joined meeting..")
     
-    logging.info("before initial check")
+    # TODO use new recordings image
     check_inital_join_states(description) #check if there are polls, recording, etc and clear the dialogs
     
     # Start background threads
@@ -485,7 +483,7 @@ def check_inital_join_states(description):
     if (locate_image_on_screen('meeting_is_being_recorded.png') is not None):
         logging.info("This meeting is being recorded..")
         try:
-            pos = locate_image_on_screen('got_it.png')
+            pos = locate_image_on_screen('meeting_is_being_recorded_ok.png')
             pyautogui.click(*pos)
             logging.info("Accepted recording..")
         except TypeError:
