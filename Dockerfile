@@ -82,11 +82,6 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 
-# Install pulseaudio
-#RUN apt-get update && apt-get install -y \
-#    pulseaudio \
-#    pavucontrol && \
-#    rm -rf /var/lib/apt/lists/*
 
 # Install Zoom (6.6.6.5306)
 RUN wget -O zoom.deb https://zoom.us/client/6.6.6.5306/zoom_amd64.deb && \
@@ -104,9 +99,6 @@ ADD res/requirements.txt ${HOME}/res/requirements.txt
 #    chromium-browser \
 #    scrot && \
 RUN pip3 install --upgrade --no-cache-dir -r ${HOME}/res/requirements.txt && pip3 install --upgrade --no-cache-dir pynput
-    # Install VLC - optional
-    #apt-get install --no-install-recommends -y vlc
-
 # Install VNC components
 #RUN apt-get update && apt-get install -y \
 #    x11vnc \
@@ -153,7 +145,8 @@ RUN chmod a+x ${START_DIR}/entrypoint.sh && \
     chmod -R a+rw ${START_DIR} && \
     chown -R zoomrec:zoomrec ${HOME} && \
     find ${HOME}/ -name '*.sh' -exec chmod -v a+x {} +
-    #find ${HOME}/ -name '*.desktop' -exec chmod -v a+x {} +
+
+#find ${HOME}/ -name '*.desktop' -exec chmod -v a+x {} +
 RUN CONFIG=/home/zoomrec/.config/zoomus.conf \
  && mkdir -p /home/zoomrec/.config \
  && touch "$CONFIG" \
